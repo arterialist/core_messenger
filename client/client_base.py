@@ -26,6 +26,7 @@ incoming_connection_address = None
 current_connection = None
 current_connection_address = None
 current_peer_id = None
+current_peer_nickname = None
 
 incoming_message_thread = None
 incoming_connection_thread = None

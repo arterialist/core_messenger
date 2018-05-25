@@ -3,12 +3,13 @@ import re
 from PyQt5.QtWidgets import QInputDialog, QMessageBox
 
 from client import client_base
-from client.models.actions import NewMessageAction
+from client.models.actions import *
 from client.models.messages import Message
 from client.models.packets import Packet
-from iotools.sql_utils import delete_dialog, save_message, create_dialog, get_messages
+from iotools.sql_utils import delete_dialog, save_message, create_dialog, get_messages, delete_message
 from tools import full_strip
 from widgets.dialogs.dialogs_list import DialogItemWidget
+from widgets.message_boxes.message_delete_box import DeleteMsgMessageBox
 from widgets.messages.messages_list import MessageItemWidget
 
 
@@ -52,7 +53,7 @@ def dialog_item_changed_callback(current, window):
         messages = get_messages(current.peer_id)
 
         for message in messages:
-            messages_list.addItem(MessageItemWidget(message.mine, message.text))
+            messages_list.addItem(MessageItemWidget(message))
 
 
 def send_button_clicked_callback(widget):
@@ -63,11 +64,11 @@ def send_button_clicked_callback(widget):
             return
 
         messages_list = widget.parentWidget().parentWidget().messages_list
-        messages_list.addItem(MessageItemWidget(True, message_text))
-        messages_list.scrollToBottom()
         message = Message(text=message_text)
         client_base.send_message(Packet(action=NewMessageAction(), message=message))
         message.mine = True
+        messages_list.addItem(MessageItemWidget(message))
+        messages_list.scrollToBottom()
         save_message(client_base.current_peer_id, message)
 
 
@@ -91,9 +92,20 @@ def decline_incoming_connection():
 
 def new_message_callback(packet, window):
     messages_list = window.centralWidget().opened_dialog_frame.messages_list
-    messages_list.addItem(MessageItemWidget(packet.message.mine, packet.message.text))
-    messages_list.scrollToBottom()
-    save_message(client_base.current_peer_id, packet.message)
+
+    action = packet.action.action  # yes, I know
+
+    if action == "new":
+        messages_list.addItem(MessageItemWidget(packet.message))
+        messages_list.scrollToBottom()
+        save_message(client_base.current_peer_id, packet.message)
+    elif action == "delete":
+        delete_message(client_base.current_peer_id, packet.message.message_id)
+        for index in range(messages_list.count()):
+            message_item = messages_list.item(index)
+            if message_item.message.message_id == packet.message.message_id:
+                messages_list.takeItem(messages_list.row(message_item))
+                break
 
 
 def invalid_message_callback(reason, message, window):
@@ -118,3 +130,26 @@ def view_button_clicked_callback(button, message, window):
 def delete_dialog_callback(peer_id):
     delete_dialog(peer_id)
     client_base.disconnect()
+
+
+def delete_message_item_selected_callback(messages_list, message):
+    confirmation_dialog = DeleteMsgMessageBox(message.message.mine)
+
+    result = confirmation_dialog.exec_()
+
+    if result[0] == QMessageBox.Ok:
+        # that's ...
+        dialogs_list = messages_list \
+            .parentWidget() \
+            .parentWidget() \
+            .parentWidget() \
+            .parentWidget() \
+            .dialogs_list_frame \
+            .dialogs_list
+        dialog = dialogs_list.currentItem()
+        delete_message(dialog.peer_id, message.message.message_id)
+        messages_list.takeItem(messages_list.row(message))
+
+    if result[1]:
+        delete_message_msg = Message(message_id=message.message.message_id, timestamp=0)
+        client_base.send_message(Packet(action=DeleteMessageAction(), message=delete_message_msg))

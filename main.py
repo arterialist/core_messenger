@@ -90,24 +90,23 @@ class MainWindow(QMainWindow):
         client_base.finish()
 
 
-# noinspection PyAttributeOutsideInit
 class RootWidget(QWidget):
     def __init__(self):
         super().__init__()
+        self.splitter = QSplitter(Qt.Horizontal)
+        self.opened_dialog_frame = OpenedDialogWidget()
+        self.dialogs_list_frame = DialogsListRootWidget()
         self.init_ui()
 
     def init_ui(self):
         layout = QHBoxLayout(self)
 
-        self.dialogs_list_frame = DialogsListRootWidget()
         self.dialogs_list_frame.setFrameShape(QFrame.StyledPanel)
         self.dialogs_list_frame.setMinimumWidth(200)
 
-        self.opened_dialog_frame = OpenedDialogWidget()
         self.opened_dialog_frame.setFrameShape(QFrame.StyledPanel)
         self.opened_dialog_frame.setMinimumWidth(300)
 
-        self.splitter = QSplitter(Qt.Horizontal)
         self.splitter.addWidget(self.dialogs_list_frame)
         self.splitter.addWidget(self.opened_dialog_frame)
 
@@ -119,10 +118,12 @@ class RootWidget(QWidget):
         self.setLayout(layout)
 
 
-# noinspection PyAttributeOutsideInit
 class DialogsListRootWidget(QFrame):
     def __init__(self):
         super().__init__()
+        self.dialogs_list = QListWidget()
+        self.incoming_connection = DialogsIncomingConnectionWidget(window)
+        self.head = DialogsListHeadWidget()
         self.init_ui()
 
     def init_ui(self):
@@ -130,15 +131,11 @@ class DialogsListRootWidget(QFrame):
 
         client_base.incoming_connection_callback = lambda: handle_incoming_connection_callback(self)
 
-        self.head = DialogsListHeadWidget()
-        self.incoming_connection = DialogsIncomingConnectionWidget(window)
         self.incoming_connection.setHidden(True)
-        self.dialogs_list = QListWidget()
         p = self.dialogs_list.palette()
         p.setColor(QPalette.Base, QColor(color_palette.primary))
         self.dialogs_list.setPalette(p)
         self.dialogs_list.setIconSize(QSize(40, 40))
-        # noinspection PyTypeChecker
         self.dialogs_list.setSelectionMode(QAbstractItemView.SingleSelection)
         self.dialogs_list.currentItemChanged.connect(lambda current, previous: dialog_item_changed_callback(current, window))
         self.dialogs_list.setSpacing(5)
@@ -158,6 +155,8 @@ class DialogsListRootWidget(QFrame):
         self.setLayout(layout)
 
     def dialog_context_menu_event(self, event):
+        # this is necessary!
+        # noinspection PyAttributeOutsideInit
         self.menu = QMenu(self)
         close_action = QAction('Disconnect', self)
         close_action.triggered.connect(lambda: self.remove_dialog(self.dialogs_list.currentItem()))
@@ -171,16 +170,17 @@ class DialogsListRootWidget(QFrame):
             self.dialogs_list.takeItem(self.dialogs_list.row(dialog))
 
 
-# noinspection PyAttributeOutsideInit
 class OpenedDialogWidget(QFrame):
     def __init__(self):
         super().__init__()
+        self.splitter = QSplitter(Qt.Vertical)
+        self.message_input = MessageInputWidget()
+        self.messages_list = QListWidget()
         self.init_ui()
 
     def init_ui(self):
         layout = QVBoxLayout()
 
-        self.messages_list = QListWidget()
         p = self.messages_list.palette()
         p.setColor(QPalette.Base, QColor(color_palette.primary_dark))
         self.messages_list.setPalette(p)
@@ -190,12 +190,9 @@ class OpenedDialogWidget(QFrame):
         self.messages_list.setContextMenuPolicy(Qt.CustomContextMenu)
         self.messages_list.customContextMenuRequested.connect(self.message_context_menu_event)
 
-        self.message_input = MessageInputWidget()
-
         self.message_input.setMinimumHeight(50)
         self.message_input.setMaximumHeight(100)
 
-        self.splitter = QSplitter(Qt.Vertical)
         self.splitter.addWidget(self.messages_list)
         self.splitter.addWidget(self.message_input)
 
@@ -207,12 +204,15 @@ class OpenedDialogWidget(QFrame):
         self.setLayout(layout)
 
     def message_context_menu_event(self, event):
+        # same thing
+        # noinspection PyAttributeOutsideInit
         self.menu = QMenu(self)
         reply_action = QAction('Reply', self)
         forward_action = QAction('Forward', self)
         edit_action = QAction('Edit', self)
         delete_action = QAction('Delete', self)
-        reply_action.triggered.connect(lambda: print(self.messages_list.currentItem()))
+        message_item = self.messages_list.currentItem()
+        delete_action.triggered.connect(lambda: delete_message_item_selected_callback(self.messages_list, message_item))
         self.menu.addAction(reply_action)
         self.menu.addAction(forward_action)
         self.menu.addAction(edit_action)
