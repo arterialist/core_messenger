@@ -186,6 +186,7 @@ class OpenedDialogWidget(QFrame):
         self.messages_list.setPalette(p)
         self.messages_list.setSpacing(5)
         self.messages_list.showMinimized()
+        self.messages_list.setWordWrap(True)
 
         self.messages_list.setContextMenuPolicy(Qt.CustomContextMenu)
         self.messages_list.customContextMenuRequested.connect(self.message_context_menu_event)

@@ -19,6 +19,7 @@ class MessageInputWidget(QFrame):
         palette.setColor(QPalette.Base, QColor(color_palette.primary_light))
         self.message_input.setPalette(palette)
         self.message_input.setTextColor(QColor('#ffffff'))
+        self.message_input.setAutoFormatting(QTextEdit.AutoAll)
 
         self.send_button.setFixedWidth(50)
         p = self.send_button.palette()
