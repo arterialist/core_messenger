@@ -1,6 +1,6 @@
 import re
 
-from PyQt5.QtWidgets import QInputDialog
+from PyQt5.QtWidgets import QInputDialog, QMessageBox
 
 from client import client_base
 from client.models.actions import NewMessageAction
@@ -90,11 +90,29 @@ def decline_incoming_connection():
 
 
 def new_message_callback(packet, window):
-    print(packet)
     messages_list = window.centralWidget().opened_dialog_frame.messages_list
     messages_list.addItem(MessageItemWidget(packet.message.mine, packet.message.text))
     messages_list.scrollToBottom()
     save_message(client_base.current_peer_id, packet.message)
+
+
+def invalid_message_callback(reason, message, window):
+    alert_box = QMessageBox(window)
+    alert_box.setWindowTitle("Invalid message received")
+    alert_box.setText("Reason:\n{}".format(reason))
+    alert_box.addButton("View", QMessageBox.ActionRole)
+    alert_box.setStandardButtons(QMessageBox.Ok)
+    alert_box.buttonClicked.connect(lambda btn: view_button_clicked_callback(btn, message, window))
+    alert_box.exec_()
+
+
+def view_button_clicked_callback(button, message, window):
+    if button.text() == "View":
+        alert_box = QMessageBox(window)
+        alert_box.setWindowTitle("Message")
+        alert_box.setText(message)
+        alert_box.addButton("Ok", QMessageBox.YesRole)
+        alert_box.exec_()
 
 
 def delete_dialog_callback(peer_id):

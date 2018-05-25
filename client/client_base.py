@@ -33,6 +33,7 @@ message_sending_thread = None
 
 incoming_connection_callback = None
 new_message_callback = None
+invalid_message_callback = None
 
 
 def init_socket():
@@ -59,6 +60,7 @@ def p2p_new_message_listener():
     global current_connection, connected
     while connected:
         data = current_connection.recv(4096)
+        reason = None
         if data == b'':
             print('Connection closed')
             connected = False
@@ -70,11 +72,14 @@ def p2p_new_message_listener():
                 new_message_callback(recv_msg)
             print(recv_msg.__dict__)
         except UnicodeDecodeError:
-            print('Corrupted message')
+            reason = "Corrupted message"
         except JSONDecodeError:
-            print('Received non-JSON message (raw connection?)')
+            reason = "Received non-JSON message (raw connection?)"
         except KeyError:
-            print("Invalid JSON schema")
+            reason = "Invalid JSON schema"
+        finally:
+            if reason and invalid_message_callback:
+                invalid_message_callback(reason, data.decode("utf8"))
 
 
 def server_new_message_listener():

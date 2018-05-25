@@ -84,6 +84,7 @@ class MainWindow(QMainWindow):
 
         client_base.init_socket()
         client_base.new_message_callback = lambda message: new_message_callback(message, window)
+        client_base.invalid_message_callback = lambda reason, message: invalid_message_callback(reason, message, window)
 
     def closeEvent(self, a0: QCloseEvent):
         client_base.finish()
