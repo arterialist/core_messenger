@@ -56,8 +56,11 @@ class MainWindow(QMainWindow):
 
         while 1:
             text, ok = QInputDialog.getText(self, 'Nickname', 'Enter nickname:')
-            if ok and len(full_strip(text)):
-                break
+            if ok:
+                if len(full_strip(text)):
+                    break
+            else:
+                self.close()
 
         client_base.nickname = text
         print('nickname: {}'.format(text))
@@ -71,13 +74,17 @@ class MainWindow(QMainWindow):
             decimal
             less than 655536 (2^16)
             not reserved (ftp, ssh, http, https)
+            
+            needs further improvement (port checking)
             '''
-            if ok \
-                    and len(text) \
-                    and text.isdecimal() \
-                    and int(text) < 65536 \
-                    and int(text) not in (21, 22, 80, 443):
-                break
+            if ok:
+                if len(text) \
+                        and text.isdecimal() \
+                        and int(text) < 65536 \
+                        and int(text) not in (21, 22, 80, 443):
+                    break
+            else:
+                self.close()
 
         client_base.local_port = int(text)
         print('listening port: {}'.format(text))

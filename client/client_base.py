@@ -200,8 +200,9 @@ def finish():
     global sock, current_connection, incoming_message_thread, incoming_connection_thread, connected
 
     connected = False
-    sock.detach()
-    sock.close()
+    if sock:
+        sock.detach()
+        sock.close()
 
     if current_connection:
         current_connection.detach()
