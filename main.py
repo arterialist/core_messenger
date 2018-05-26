@@ -8,17 +8,15 @@ from PyQt5.QtWidgets import QApplication, QAction, qApp, QMainWindow, QHBoxLayou
 import color_palette
 from callback.callbacks import *
 from client import client_base
-from iotools.sql_base import SQLManager, ColumnTypes
+from iotools.sql_base import SQLManager, DB_MESSAGING
+from iotools.sql_utils import init_databases, save_databases
+from iotools.storage import AppStorage
 from tools import full_strip
 from widgets.dialogs.dialogs_head import DialogsListHeadWidget, DialogsIncomingConnectionWidget
 from widgets.messages.message_input import MessageInputWidget
 
 window = None
-sql_storage_manager = SQLManager.get_instance("files/storage.db")
-
-sql_storage_manager.create_table("dialogs",
-                                 ["host", "port", "chat_type", "peer_id"],
-                                 [ColumnTypes.TEXT, ColumnTypes.NUMERIC, ColumnTypes.NUMERIC, ColumnTypes.TEXT])
+init_databases()
 
 
 class MainWindow(QMainWindow):
@@ -52,22 +50,19 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('Core Messenger')
         self.setWindowIcon(QIcon('images/telegram_icon.png'))
 
-        self.show()
-
+    def show(self):
+        super().show()
         while 1:
-            text, ok = QInputDialog.getText(self, 'Nickname', 'Enter nickname:')
+            nickname, ok = QInputDialog.getText(self, 'Nickname', 'Enter nickname:')
             if ok:
-                if len(full_strip(text)):
+                if len(full_strip(nickname)):
                     break
             else:
                 self.close()
 
-        client_base.nickname = text
-        print('nickname: {}'.format(text))
-
         while 1:
-            text, ok = QInputDialog.getText(self, 'Port', 'Enter listening port:')
-            text = full_strip(text)
+            port, ok = QInputDialog.getText(self, 'Port', 'Enter listening port:')
+            port = full_strip(port)
 
             '''
             port must me
@@ -78,16 +73,22 @@ class MainWindow(QMainWindow):
             needs further improvement (port checking)
             '''
             if ok:
-                if len(text) \
-                        and text.isdecimal() \
-                        and int(text) < 65536 \
-                        and int(text) not in (21, 22, 80, 443):
+                if len(port) \
+                        and port.isdecimal() \
+                        and int(port) < 65536 \
+                        and int(port) not in (21, 22, 80, 443):
                     break
             else:
                 self.close()
 
-        client_base.local_port = int(text)
-        print('listening port: {}'.format(text))
+        client_base.nickname = nickname
+        print('nickname: {}'.format(nickname))
+
+        client_base.local_port = int(port)
+        print('listening port: {}'.format(port))
+
+        AppStorage.get_storage().set("nickname", nickname)
+        AppStorage.get_storage().set("port", port)
 
         client_base.init_socket()
         client_base.new_message_callback = lambda message: new_message_callback(message, window)
@@ -150,7 +151,7 @@ class DialogsListRootWidget(QFrame):
         self.dialogs_list.setContextMenuPolicy(Qt.CustomContextMenu)
         self.dialogs_list.customContextMenuRequested.connect(self.dialog_context_menu_event)
 
-        dialogs = sql_storage_manager.select_all("dialogs")
+        dialogs = SQLManager.get_instance(DB_MESSAGING).select_all("dialogs")
         for item in dialogs:
             self.dialogs_list.addItem(DialogItemWidget("", item[0], item[1], item[2], peer_id=item[3]))
 
@@ -232,8 +233,10 @@ class OpenedDialogWidget(QFrame):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = MainWindow()
+    window.show()
     # noinspection PyBroadException
     try:
         sys.exit(app.exec_())
-    except Exception:
+    finally:
+        save_databases(AppStorage.get_settings(), AppStorage.get_storage())
         client_base.finish()

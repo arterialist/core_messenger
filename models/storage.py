@@ -1,0 +1,54 @@
+class Settings:
+    def __init__(self):
+        self.__settings = dict()
+        self.__new_keys = list()
+
+    def has(self, key):
+        try:
+            val = self.__settings[key]
+            return True
+        except KeyError:
+            return False
+
+    def set(self, key, value):
+        if not self.has(key):
+            self.__new_keys.append(key)
+        self.__settings[key] = value
+
+    def get(self, key):
+        self.__settings.get(key, "")
+
+    def is_new(self, key):
+        return key in self.__new_keys
+
+    def iterate(self):
+        for key, value in self.__settings.items():
+            yield key, value
+
+
+class Storage:
+    def __init__(self):
+        self.__storage = dict()
+        self.__new_keys = list()
+
+    def has(self, key):
+        try:
+            val = self.__storage[key]
+            return True
+        except KeyError:
+            return False
+
+    def set(self, key, value):
+        if not self.has(key):
+            self.__new_keys.append(key)
+        self.__storage[key] = value
+
+    def get(self, key):
+        self.__storage.get(key, "")
+
+    def is_new(self, key):
+        return key in self.__new_keys
+
+    def iterate(self):
+        for key, value in self.__storage.items():
+            yield key, value
