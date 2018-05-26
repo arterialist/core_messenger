@@ -10,8 +10,8 @@ class Settings:
         except KeyError:
             return False
 
-    def set(self, key, value):
-        if not self.has(key):
+    def set(self, key, value, init=False):
+        if not self.has(key) and not init:
             self.__new_keys.append(key)
         self.__settings[key] = value
 
@@ -38,8 +38,8 @@ class Storage:
         except KeyError:
             return False
 
-    def set(self, key, value):
-        if not self.has(key):
+    def set(self, key, value, init=False):
+        if not self.has(key) and not init:
             self.__new_keys.append(key)
         self.__storage[key] = value
 

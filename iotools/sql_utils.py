@@ -25,21 +25,21 @@ def create_dialogs_table():
 def create_settings_table():
     SQLManager.get_instance(DB_SETTINGS) \
         .create_table("settings",
-                      ["key", "value"],
+                      ["name", "value"],
                       [ColumnTypes.TEXT, ColumnTypes.TEXT])
 
 
 def create_storage_table():
     SQLManager.get_instance(DB_STORAGE) \
         .create_table("storage",
-                      ["key", "value"],
+                      ["name", "value"],
                       [ColumnTypes.TEXT, ColumnTypes.TEXT])
 
 
 def get_settings_from_db():
     settings = Settings()
     for setting in SQLManager.get_instance(DB_SETTINGS).select_all("settings"):
-        settings.set(setting[0], setting[1])
+        settings.set(setting[0], setting[1], init=True)
 
     return settings
 
@@ -47,7 +47,7 @@ def get_settings_from_db():
 def get_storage_from_db():
     storage = Storage()
     for pref in SQLManager.get_instance(DB_STORAGE).select_all("storage"):
-        storage.set(pref[0], pref[1])
+        storage.set(pref[0], pref[1], init=True)
 
     return storage
 
@@ -59,13 +59,13 @@ def save_settings_to_db(settings):
         if settings.is_new(key):
             sql_manager.add_record(
                 "settings",
-                ["key", "value"],
+                ["name", "value"],
                 [key, value])
         else:
             sql_manager.edit_record(
-                "key='{}'".format(key),
+                "name='{}'".format(key),
                 "settings",
-                ["key", "value"],
+                ["name", "value"],
                 [key, value])
 
 
@@ -76,13 +76,13 @@ def save_storage_to_db(storage):
         if storage.is_new(key):
             sql_manager.add_record(
                 "storage",
-                ["key", "value"],
+                ["name", "value"],
                 [key, value])
         else:
             sql_manager.edit_record(
-                "key='{}'".format(key),
+                "name='{}'".format(key),
                 "storage",
-                ["key", "value"],
+                ["name", "value"],
                 [key, value])
 
 
