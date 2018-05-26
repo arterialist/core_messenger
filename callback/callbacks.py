@@ -109,22 +109,13 @@ def new_message_callback(packet, window):
 
 
 def invalid_message_callback(reason, message):
+    client_base.invalid_message_callback = None
     alert_box = QMessageBox()
     alert_box.setWindowTitle("Invalid message received")
-    alert_box.setText("Reason:\n{}".format(reason))
-    alert_box.addButton("View", QMessageBox.ActionRole)
+    alert_box.setText("Reason:\n{}\n\nMessage:\n{}".format(reason, message))
     alert_box.setStandardButtons(QMessageBox.Ok)
-    alert_box.buttonClicked.connect(lambda btn: view_button_clicked_callback(btn, message))
     alert_box.exec_()
-
-
-def view_button_clicked_callback(button, message):
-    if button.text() == "View":
-        alert_box = QMessageBox()
-        alert_box.setWindowTitle("Message")
-        alert_box.setText(message)
-        alert_box.addButton("Ok", QMessageBox.YesRole)
-        alert_box.exec_()
+    client_base.invalid_message_callback = invalid_message_callback
 
 
 def delete_dialog_callback(peer_id):
