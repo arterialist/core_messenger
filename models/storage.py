@@ -4,11 +4,7 @@ class Settings:
         self.__new_keys = list()
 
     def has(self, key):
-        try:
-            val = self.__settings[key]
-            return True
-        except KeyError:
-            return False
+        return key in self.__settings
 
     def set(self, key, value, init=False):
         if not self.has(key) and not init:
@@ -32,11 +28,7 @@ class Storage:
         self.__new_keys = list()
 
     def has(self, key):
-        try:
-            val = self.__storage[key]
-            return True
-        except KeyError:
-            return False
+        return key in self.__storage
 
     def set(self, key, value, init=False):
         if not self.has(key) and not init:
