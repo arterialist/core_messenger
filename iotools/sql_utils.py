@@ -1,6 +1,6 @@
 from client import client_base
 from client.models.messages import Message
-from iotools.sql_base import SQLManager, ColumnTypes, DB_MESSAGING, DB_SETTINGS, DB_STORAGE
+from iotools.sql_base import SQLManager, ColumnTypes, DB_MESSAGING, DB_SETTINGS, DB_STORAGE, Query
 from models.storage import Settings, Storage
 
 
@@ -63,7 +63,7 @@ def save_settings_to_db(settings):
                 [key, value])
         else:
             sql_manager.edit_record(
-                "name='{}'".format(key),
+                Query(["name"], [key]),
                 "settings",
                 ["name", "value"],
                 [key, value])
@@ -80,7 +80,7 @@ def save_storage_to_db(storage):
                 [key, value])
         else:
             sql_manager.edit_record(
-                "name='{}'".format(key),
+                Query(["name"], [key]),
                 "storage",
                 ["name", "value"],
                 [key, value])
