@@ -60,6 +60,13 @@ class SQLUtil:
             self.log_operation(self.database, query)
             self.__cursor.execute(query)
 
+    def has_table(self, table):
+        with self.__connection:
+            query = "SELECT name FROM sqlite_master WHERE type='table' AND name='{0}'".format(table)
+
+            self.log_operation(self.database, query)
+            return self.__cursor.execute(query).fetchone()
+
     def select_all(self, table):
         with self.__connection:
             query = 'SELECT * FROM {0}'.format(table)
@@ -70,7 +77,7 @@ class SQLUtil:
         with self.__connection:
             query = 'SELECT * FROM {0} WHERE {1} = {2}'.format(table, field, query)
             self.log_operation(self.database, query)
-            return self.__cursor.execute(query).fetchall()[0]
+            return self.__cursor.execute(query).fetchone()
 
     def add_record(self, table, columns=list(), values=list()):
         if len(columns) != len(values):

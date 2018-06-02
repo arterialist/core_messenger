@@ -23,10 +23,17 @@ def create_dialogs_table():
 
 
 def create_settings_table():
-    SQLManager.get_instance(DB_SETTINGS) \
-        .create_table("settings",
-                      ["name", "value"],
-                      [ColumnTypes.TEXT, ColumnTypes.TEXT])
+    sql_manager = SQLManager.get_instance(DB_SETTINGS)
+    sql_manager.create_table("_categories",
+                             ["name", "display_name"],
+                             [ColumnTypes.TEXT, ColumnTypes.TEXT])
+
+    if not sql_manager.has_table("general"):
+        sql_manager.add_record("_categories", ["name", "display_name"], ["general", "General"])
+
+    sql_manager.create_table("general",
+                             ["name", "value", "type", "display_name"],
+                             [ColumnTypes.TEXT, ColumnTypes.TEXT, ColumnTypes.NUMERIC, ColumnTypes.TEXT])
 
 
 def create_storage_table():
@@ -38,8 +45,9 @@ def create_storage_table():
 
 def get_settings_from_db():
     settings = Settings()
-    for setting in SQLManager.get_instance(DB_SETTINGS).select_all("settings"):
-        settings.set(setting[0], setting[1], init=True)
+    for category in SQLManager.get_instance(DB_SETTINGS).select_all("_categories"):
+        for setting in SQLManager.get_instance(DB_SETTINGS).select_all(category[0]):
+            settings.set(category, setting[0], setting[1], init=True)
 
     return settings
 
@@ -55,16 +63,16 @@ def get_storage_from_db():
 def save_settings_to_db(settings):
     sql_manager = SQLManager.get_instance(DB_SETTINGS)
 
-    for key, value in settings.iterate():
+    for category, key, value in settings.iterate():
         if settings.is_new(key):
             sql_manager.add_record(
-                "settings",
+                category,
                 ["name", "value"],
                 [key, value])
         else:
             sql_manager.edit_record(
                 Query(["name"], [key]),
-                "settings",
+                category,
                 ["name", "value"],
                 [key, value])
 
