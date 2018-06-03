@@ -1,7 +1,7 @@
 from client import client_base
 from client.models.messages import Message
 from iotools.sql_base import SQLManager, ColumnTypes, DB_MESSAGING, DB_SETTINGS, DB_STORAGE, Query
-from models.storage import Settings, Storage
+from models.models import Settings, Storage, Category, Setting
 
 
 def init_databases():
@@ -47,7 +47,10 @@ def get_settings_from_db():
     settings = Settings()
     for category in SQLManager.get_instance(DB_SETTINGS).select_all("_categories"):
         for setting in SQLManager.get_instance(DB_SETTINGS).select_all(category[0]):
-            settings.set(category, setting[0], setting[1], init=True)
+            settings.set(
+                Category(category[0], category[1]),
+                Setting(setting[0], setting[1], setting[2], setting[3]),
+                init=True)
 
     return settings
 
@@ -63,18 +66,18 @@ def get_storage_from_db():
 def save_settings_to_db(settings):
     sql_manager = SQLManager.get_instance(DB_SETTINGS)
 
-    for category, key, value in settings.iterate():
-        if settings.is_new(key):
+    for category, setting in settings.iterate():
+        if settings.is_new(category, setting):
             sql_manager.add_record(
-                category,
-                ["name", "value"],
-                [key, value])
+                category.name,
+                ["name", "value", "type", "display_name"],
+                [setting.key, setting.value, setting.setting_type, setting.display_name])
         else:
             sql_manager.edit_record(
-                Query(["name"], [key]),
-                category,
+                Query(["name"], [setting.key]),
+                category.name,
                 ["name", "value"],
-                [key, value])
+                [setting.key, setting.value])
 
 
 def save_storage_to_db(storage):
