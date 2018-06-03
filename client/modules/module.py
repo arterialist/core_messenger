@@ -1,7 +1,7 @@
 class BaseModule:
-    def __init__(self):
+    def __init__(self, enabled=True):
         print("Module {} loaded".format(self.__class__.__name__))
-        self.enabled = True
+        self.enabled = enabled
 
     # method for modifications of data before sending
     def process(self, data):

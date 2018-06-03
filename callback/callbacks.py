@@ -64,12 +64,12 @@ def send_button_clicked_callback(widget):
             return
 
         messages_list = widget.parentWidget().parentWidget().messages_list
-        message = Message(text=message_text)
-        client_base.send_message(Packet(action=NewMessageAction(), message=message))
-        message.mine = True
+        message = Message(text=message_text, mine=True)
+        save_message(client_base.current_peer_id, message)
         messages_list.addItem(MessageItemWidget(message))
         messages_list.scrollToBottom()
-        save_message(client_base.current_peer_id, message)
+        message.mine = False
+        client_base.send_message(Packet(action=NewMessageAction(), message=message))
 
 
 def toggle_listening_callback():

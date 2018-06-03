@@ -3,7 +3,6 @@ import threading
 from json import JSONDecodeError
 
 from client import layers
-from client.models.packets import Packet
 from client.modules.default_modules import SendAsJSONModule
 
 # load modules
@@ -67,8 +66,7 @@ def p2p_new_message_listener():
             connected = False
             break
         try:
-            recv_msg = Packet.from_json_obj(layers.socket_handle_received(current_connection, data.decode('utf8'), loaded_modules))
-            recv_msg.message.mine = False
+            recv_msg = layers.socket_handle_received(current_connection, data.decode('utf8'), loaded_modules)
             if new_message_callback:
                 new_message_callback(recv_msg)
             print(recv_msg.__dict__)

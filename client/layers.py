@@ -4,11 +4,13 @@ this file is created to make functionality growth fast
 
 
 def socket_send_data(to, what, through=list()):
+    through.reverse()
     for action in through:
         what = action.process(what)
 
     if to:
         to.sendall(what)
+    through.reverse()
 
 
 def socket_handle_received(from_s, what, through=list()):

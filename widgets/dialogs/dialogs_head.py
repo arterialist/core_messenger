@@ -6,7 +6,6 @@ import color_palette
 from callback.callbacks import new_dialog_click_callback, accept_incoming_connection, decline_incoming_connection
 from client import client_base
 from iotools import sql_utils
-from iotools.sql_base import SQLManager
 from widgets.dialogs.dialogs_list import DialogItemWidget
 
 
