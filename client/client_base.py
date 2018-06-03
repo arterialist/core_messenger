@@ -3,10 +3,10 @@ import threading
 from json import JSONDecodeError
 
 from client import layers
-from client.modules.default_modules import SendAsJSONModule
+from client.modules.default_modules import SendAsJSONModule, Base64EncodeModule
 
 # load modules
-loaded_modules = [SendAsJSONModule()]
+loaded_modules = [SendAsJSONModule(), Base64EncodeModule()]
 
 nickname = None
 local_port = None
