@@ -14,8 +14,10 @@ from iotools.storage import AppStorage
 from tools import full_strip
 from widgets.dialogs.dialogs_head import DialogsListHeadWidget, DialogsIncomingConnectionWidget
 from widgets.messages.message_input import MessageInputWidget
+from widgets.windows.settings_window import SettingsWindow
 
-window = None
+main_window = None
+settings_window = None
 init_databases()
 
 
@@ -26,10 +28,15 @@ class MainWindow(QMainWindow):
         self.init_ui()
 
     def init_ui(self):
-        toggle_listening_action = QAction('Toggle &listening', self, checkable=True)
+        toggle_listening_action = QAction("Toggle &listening", parent=self)
+        toggle_listening_action.setCheckable(True)
         toggle_listening_action.setChecked(False)
         toggle_listening_action.setShortcut('Ctrl+L')
         toggle_listening_action.triggered.connect(toggle_listening_callback)
+
+        settings_action = QAction("&Settings", parent=self)
+        settings_action.setShortcut("Ctrl+Shift+S")
+        settings_action.triggered.connect(self.open_settings)
 
         exit_action = QAction(QIcon('images/exit.png'), '&Quit', self)
         exit_action.setShortcut('Ctrl+Q')
@@ -37,8 +44,9 @@ class MainWindow(QMainWindow):
 
         menu_bar = self.menuBar()
         file_menu = menu_bar.addMenu('File')
-        file_menu.addAction(exit_action)
         file_menu.addAction(toggle_listening_action)
+        file_menu.addAction(settings_action)
+        file_menu.addAction(exit_action)
 
         p = self.palette()
         p.setColor(QPalette.Background, QColor(color_palette.primary))
@@ -91,8 +99,12 @@ class MainWindow(QMainWindow):
         AppStorage.get_storage().set("port", port)
 
         client_base.init_socket()
-        client_base.new_message_callback = lambda message: new_message_callback(message, window)
+        client_base.new_message_callback = lambda message: new_message_callback(message, main_window)
         client_base.invalid_message_callback = invalid_message_callback
+
+    @staticmethod
+    def open_settings():
+        settings_window.show()
 
     def closeEvent(self, a0: QCloseEvent):
         client_base.finish()
@@ -130,7 +142,7 @@ class DialogsListRootWidget(QFrame):
     def __init__(self):
         super().__init__()
         self.dialogs_list = QListWidget()
-        self.incoming_connection = DialogsIncomingConnectionWidget(window)
+        self.incoming_connection = DialogsIncomingConnectionWidget(main_window)
         self.head = DialogsListHeadWidget()
         self.init_ui()
 
@@ -145,7 +157,7 @@ class DialogsListRootWidget(QFrame):
         self.dialogs_list.setPalette(p)
         self.dialogs_list.setIconSize(QSize(40, 40))
         self.dialogs_list.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.dialogs_list.currentItemChanged.connect(lambda current, previous: dialog_item_changed_callback(current, window))
+        self.dialogs_list.currentItemChanged.connect(lambda current, previous: dialog_item_changed_callback(current, main_window))
         self.dialogs_list.setSpacing(5)
 
         self.dialogs_list.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -232,8 +244,9 @@ class OpenedDialogWidget(QFrame):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
+    main_window = MainWindow()
+    settings_window = SettingsWindow()
+    main_window.show()
     # noinspection PyBroadException
     try:
         sys.exit(app.exec_())
