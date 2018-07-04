@@ -8,7 +8,7 @@ class Categories:
     __categories = dict()
 
     @staticmethod
-    def get_category(name, display_name):
+    def get_category(name: str, display_name: str) -> Category:
         if name not in Categories.__categories.keys():
             Categories.__categories[name] = Category(name, display_name)
         return Categories.__categories[name]
@@ -34,13 +34,13 @@ class Settings:
         self.__settings = dict()
         self.__new_settings = dict()
 
-    def has(self, category: Category, setting: Setting):
+    def has(self, category: Category, setting: Setting) -> bool:
         for existing_setting in self.__settings[category]:
             if setting.key == existing_setting.key:
                 return True
         return False
 
-    def set(self, possibly_new_category: Category, setting: Setting, init=False):
+    def set(self, possibly_new_category: Category, setting: Setting, init: bool = False):
         category = Categories.get_category(possibly_new_category.name, possibly_new_category.display_name)
         if category not in self.__settings.keys():
             self.__settings[category] = list()
@@ -58,23 +58,23 @@ class Settings:
                     self.__settings[category][self.__settings[category].index(existing_setting)] = setting
                     return
 
-    def get(self, category: Category, key):
+    def get(self, category: Category, key: str) -> Setting:
         for setting in self.__settings.get(Categories.get_category(category.name, category.display_name), list()):
             if setting.key == key:
                 return setting
 
-    def is_new(self, category: Category, setting: Setting):
+    def is_new(self, category: Category, setting: Setting) -> bool:
         return setting in self.__new_settings.get(category, list())
 
-    def iterate(self):
+    def iterate(self) -> tuple:
         for category, settings in self.__settings.items():
             for setting in settings:
                 yield category, setting
 
-    def get_categories(self):
+    def get_categories(self) -> list:
         return list(self.__settings.keys())
 
-    def get_settings(self, category):
+    def get_settings(self, category: Category) -> list:
         return self.__settings[category]
 
 
@@ -83,20 +83,20 @@ class Storage:
         self.__storage = dict()
         self.__new_keys = list()
 
-    def has(self, key):
+    def has(self, key: str) -> bool:
         return key in self.__storage
 
-    def set(self, key, value, init=False):
+    def set(self, key: str, value: object, init: bool = False):
         if not self.has(key) and not init:
             self.__new_keys.append(key)
         self.__storage[key] = value
 
-    def get(self, key):
+    def get(self, key: str) -> str:
         return self.__storage.get(key, "")
 
-    def is_new(self, key):
+    def is_new(self, key: str) -> bool:
         return key in self.__new_keys
 
-    def iterate(self):
+    def iterate(self) -> tuple:
         for key, value in self.__storage.items():
             yield key, value

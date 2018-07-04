@@ -11,6 +11,7 @@ from client import client_base
 from iotools.sql_base import SQLManager, DB_MESSAGING
 from iotools.sql_utils import init_databases, save_databases
 from iotools.storage import AppStorage
+from models.models import Category
 from tools import full_strip
 from widgets.dialogs.dialogs_head import DialogsListHeadWidget, DialogsIncomingConnectionWidget
 from widgets.messages.message_input import MessageInputWidget
@@ -60,34 +61,38 @@ class MainWindow(QMainWindow):
 
     def show(self):
         super().show()
-        while 1:
-            nickname, ok = QInputDialog.getText(self, 'Nickname', 'Enter nickname:')
-            if ok:
-                if len(full_strip(nickname)):
-                    break
-            else:
-                self.close()
+        if not bool(int(AppStorage.get_settings().get(Category("general", "General"), "save_startup_data").value)):
+            while 1:
+                nickname, ok = QInputDialog.getText(self, 'Nickname', 'Enter nickname:')
+                if ok:
+                    if len(full_strip(nickname)):
+                        break
+                else:
+                    self.close()
 
-        while 1:
-            port, ok = QInputDialog.getText(self, 'Port', 'Enter listening port:')
-            port = full_strip(port)
+            while 1:
+                port, ok = QInputDialog.getText(self, 'Port', 'Enter listening port:')
+                port = full_strip(port)
 
-            '''
-            port must me
-            decimal
-            less than 655536 (2^16)
-            not reserved (ftp, ssh, http, https)
-            
-            needs further improvement (port checking)
-            '''
-            if ok:
-                if len(port) \
-                        and port.isdecimal() \
-                        and int(port) < 65536 \
-                        and int(port) not in (21, 22, 80, 443):
-                    break
-            else:
-                self.close()
+                '''
+                port must me
+                decimal
+                less than 655536 (2^16)
+                not reserved (ftp, ssh, http, https)
+                
+                needs further improvement (port checking)
+                '''
+                if ok:
+                    if len(port) \
+                            and port.isdecimal() \
+                            and int(port) < 65536 \
+                            and int(port) not in (21, 22, 80, 443):
+                        break
+                else:
+                    self.close()
+        else:
+            nickname = AppStorage.get_storage().get("nickname")
+            port = int(AppStorage.get_storage().get("port"))
 
         client_base.nickname = nickname
         print('nickname: {}'.format(nickname))
