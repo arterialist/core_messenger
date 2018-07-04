@@ -92,7 +92,7 @@ class Storage:
         self.__storage[key] = value
 
     def get(self, key):
-        self.__storage.get(key, "")
+        return self.__storage.get(key, "")
 
     def is_new(self, key):
         return key in self.__new_keys
