@@ -1,12 +1,13 @@
+import copy
 import re
 
-from PyQt5.QtWidgets import QInputDialog, QMessageBox
+from PyQt5.QtWidgets import QInputDialog, QMessageBox, QListWidget, QWidget
 
 from client import client_base
 from client.models.actions import *
 from client.models.messages import Message
 from client.models.packets import Packet
-from iotools.sql_utils import delete_dialog, save_message, create_dialog, get_messages, delete_message
+from iotools.sql_utils import delete_dialog, save_message, create_dialog, get_messages, delete_message, edit_message
 from tools import full_strip
 from widgets.dialogs.dialogs_list import DialogItemWidget
 from widgets.message_boxes.message_delete_box import DeleteMsgMessageBox
@@ -68,8 +69,9 @@ def send_button_clicked_callback(widget):
         save_message(client_base.current_peer_id, message)
         messages_list.addItem(MessageItemWidget(message))
         messages_list.scrollToBottom()
-        message.mine = False
-        client_base.send_message(Packet(action=NewMessageAction(), message=message))
+        msg_copy = copy.deepcopy(message)
+        msg_copy.mine = False
+        client_base.send_message(Packet(action=NewMessageAction(), message=msg_copy))
 
 
 def toggle_listening_callback():
@@ -91,7 +93,7 @@ def decline_incoming_connection():
 
 
 def new_message_callback(packet, window):
-    messages_list = window.centralWidget().opened_dialog_frame.messages_list
+    messages_list: QListWidget = window.centralWidget().opened_dialog_frame.messages_list
 
     action = packet.action.action  # yes, I know
 
@@ -102,9 +104,18 @@ def new_message_callback(packet, window):
     elif action == "delete":
         delete_message(client_base.current_peer_id, packet.message.message_id)
         for index in range(messages_list.count()):
-            message_item = messages_list.item(index)
+            message_item: MessageItemWidget = messages_list.item(index)
             if message_item.message.message_id == packet.message.message_id:
                 messages_list.takeItem(messages_list.row(message_item))
+                break
+    elif action == "edit":
+        edit_message(client_base.current_peer_id, packet.message)
+        for index in range(messages_list.count()):
+            message_item: MessageItemWidget = messages_list.item(index)
+            if message_item.message.message_id == packet.message.message_id:
+                row = messages_list.row(message_item)
+                messages_list.takeItem(row)
+                messages_list.insertItem(row, MessageItemWidget(packet.message))
                 break
 
 
@@ -144,3 +155,30 @@ def delete_message_item_selected_callback(messages_list, message):
     if result[1]:
         delete_message_msg = Message(message_id=message.message.message_id, timestamp=0)
         client_base.send_message(Packet(action=DeleteMessageAction(), message=delete_message_msg))
+
+
+def edit_message_item_selected_callback(opened_dialog: QWidget, message_item: MessageItemWidget):
+    old_message: Message = message_item.message
+    text_to_edit = old_message.text
+
+    new_text, ok = QInputDialog.getText(opened_dialog, "New Text", 'Edit message text', text=text_to_edit)
+
+    if ok and new_text != text_to_edit:
+        message_item.setText(new_text)
+        new_message = Message(
+            old_message.message_id,
+            old_message.timestamp,
+            new_text,
+            old_message.attachments,
+            True
+        )
+        msg_copy = copy.deepcopy(new_message)
+        msg_copy.mine = False
+        packet = Packet(
+            action=EditMessageAction(),
+            message=msg_copy
+        )
+        client_base.send_message(packet)
+        message_item.message = new_message
+        message_item.setText(new_text)
+        edit_message(client_base.current_peer_id, new_message)

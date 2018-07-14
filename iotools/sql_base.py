@@ -20,7 +20,7 @@ class SQLManager:
     __instances = dict()
 
     @staticmethod
-    def get_instance(database):
+    def get_instance(database: str):
         if SQLManager.__instances.get(database):
             return SQLManager.__instances[database]
         else:
@@ -43,7 +43,7 @@ class SQLUtil:
         self.__connection = sqlite3.connect(database, check_same_thread=False)  # dirty hack
         self.__cursor = self.__connection.cursor()
 
-    def create_table(self, table, columns=list(), types=list()):
+    def create_table(self, table: str, columns: list = list(), types: list = list()):
         if len(columns) != len(types):
             print("Columns and types have different size!")
             return
@@ -54,32 +54,32 @@ class SQLUtil:
             self.log_operation(self.database, query)
             self.__cursor.execute(query)
 
-    def delete_table(self, table):
+    def delete_table(self, table: str):
         with self.__connection:
             query = "DROP TABLE {0}".format(table)
             self.log_operation(self.database, query)
             self.__cursor.execute(query)
 
-    def has_table(self, table):
+    def has_table(self, table: str) -> bool:
         with self.__connection:
             query = "SELECT name FROM sqlite_master WHERE type='table' AND name='{0}'".format(table)
 
             self.log_operation(self.database, query)
-            return self.__cursor.execute(query).fetchone()
+            return bool(self.__cursor.execute(query).fetchone())
 
-    def select_all(self, table):
+    def select_all(self, table: str) -> list:
         with self.__connection:
             query = 'SELECT * FROM {0}'.format(table)
             self.log_operation(self.database, query)
             return self.__cursor.execute(query).fetchall()
 
-    def select_single(self, field, query, table):
+    def select_single(self, field: str, query: str, table: str) -> tuple:
         with self.__connection:
             query = 'SELECT * FROM {0} WHERE {1} = {2}'.format(table, field, query)
             self.log_operation(self.database, query)
             return self.__cursor.execute(query).fetchone()
 
-    def add_record(self, table, columns=list(), values=list()):
+    def add_record(self, table: str, columns=list(), values=list()):
         if len(columns) != len(values):
             print("Columns and values have different size!")
             return
@@ -90,7 +90,7 @@ class SQLUtil:
             self.__cursor.execute(query)
             self.__connection.commit()
 
-    def edit_record(self, query: Query, table, columns=list(), values=list()):
+    def edit_record(self, query: Query, table: str, columns=list(), values=list()):
         if len(columns) != len(values):
             print("Columns and values have different size!")
             return
@@ -103,7 +103,7 @@ class SQLUtil:
             self.__cursor.execute(sql_query, tuple(values + query.values))
             self.__connection.commit()
 
-    def delete_record(self, table, query):
+    def delete_record(self, table: str, query: str):
         with self.__connection:
             sql_query = "DELETE FROM {0} WHERE {1}".format(table, query)
             self.log_operation(self.database, sql_query)
@@ -111,7 +111,7 @@ class SQLUtil:
             self.__connection.commit()
 
     @staticmethod
-    def log_operation(file, query):
+    def log_operation(file: str, query: str):
         print("Executing query in {0} ->\n{1}".format(file, query))
 
     def close_db(self):

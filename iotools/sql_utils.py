@@ -10,7 +10,7 @@ def init_databases():
     create_storage_table()
 
 
-def save_databases(settings, storage):
+def save_databases(settings: Settings, storage: Storage):
     save_settings_to_db(settings)
     save_storage_to_db(storage)
 
@@ -43,7 +43,7 @@ def create_storage_table():
                       [ColumnTypes.TEXT, ColumnTypes.TEXT])
 
 
-def get_settings_from_db():
+def get_settings_from_db() -> Settings:
     settings = Settings()
     for category in SQLManager.get_instance(DB_SETTINGS).select_all("_categories"):
         for setting in SQLManager.get_instance(DB_SETTINGS).select_all(category[0]):
@@ -55,7 +55,7 @@ def get_settings_from_db():
     return settings
 
 
-def get_storage_from_db():
+def get_storage_from_db() -> Storage:
     storage = Storage()
     for pref in SQLManager.get_instance(DB_STORAGE).select_all("storage"):
         storage.set(pref[0], pref[1], init=True)
@@ -63,7 +63,7 @@ def get_storage_from_db():
     return storage
 
 
-def save_settings_to_db(settings):
+def save_settings_to_db(settings: Settings):
     sql_manager = SQLManager.get_instance(DB_SETTINGS)
 
     for category, setting in settings.iterate():
@@ -80,7 +80,7 @@ def save_settings_to_db(settings):
                 [setting.key, setting.value])
 
 
-def save_storage_to_db(storage):
+def save_storage_to_db(storage: Storage):
     sql_manager = SQLManager.get_instance(DB_STORAGE)
 
     for key, value in storage.iterate():
@@ -97,7 +97,7 @@ def save_storage_to_db(storage):
                 [key, value])
 
 
-def create_dialog(host, port, chat_type, peer_id):
+def create_dialog(host: str, port: str, chat_type: int, peer_id: str):
     SQLManager.get_instance(DB_MESSAGING).add_record(
         "dialogs",
         ["host", "port", "chat_type", "peer_id"],
@@ -106,34 +106,43 @@ def create_dialog(host, port, chat_type, peer_id):
     client_base.current_peer_id = peer_id
 
 
-def delete_dialog(peer_id):
+def delete_dialog(peer_id: str):
     SQLManager.get_instance(DB_MESSAGING).delete_record(
         "dialogs", "peer_id='{}'".format(peer_id))
     delete_messages_table_for_dialog(peer_id)
 
 
-def create_messages_table_for_dialog(peer_id):
+def create_messages_table_for_dialog(peer_id: str):
     SQLManager.get_instance(DB_MESSAGING).create_table(
         "messages_{}".format(peer_id),
         ["message_id", "timestamp", "text", "mine"],
         [ColumnTypes.TEXT, ColumnTypes.NUMERIC, ColumnTypes.TEXT, ColumnTypes.INTEGER])
 
 
-def delete_messages_table_for_dialog(peer_id):
+def delete_messages_table_for_dialog(peer_id: str):
     SQLManager.get_instance(DB_MESSAGING).delete_table("messages_{}".format(peer_id))
 
 
-def save_message(peer_id, message):
+def save_message(peer_id: str, message: Message):
     SQLManager.get_instance(DB_MESSAGING).add_record(
         "messages_{}".format(peer_id),
         ["message_id", "timestamp", "text", "mine"],
         [message.message_id, message.timestamp, message.text.replace("'", "''"), 1 if message.mine else 0])
 
 
-def delete_message(peer_id, message_id):
+def delete_message(peer_id: str, message_id: str):
     SQLManager.get_instance(DB_MESSAGING).delete_record(
         "messages_{}".format(peer_id),
         "message_id='{}'".format(message_id))
+
+
+def edit_message(peer_id: str, message: Message):
+    SQLManager.get_instance(DB_MESSAGING).edit_record(
+        Query(["message_id"], [message.message_id]),
+        "messages_{}".format(peer_id),
+        ["text"],
+        [message.text]
+    )
 
 
 def get_messages(peer_id):

@@ -6,7 +6,7 @@ from tools import current_time
 
 
 class Message(Jsonable):
-    def __init__(self, message_id=None, timestamp=None, text=None, attachments=None, mine=False):
+    def __init__(self, message_id: str = None, timestamp: int = None, text: str = None, attachments: list = None, mine: bool = False):
         self.message_id = message_id if message_id else hashlib.md5(str(uuid.uuid4()).encode('utf-8')).hexdigest()
         self.timestamp = timestamp if timestamp else current_time()
         self.text = text

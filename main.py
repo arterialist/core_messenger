@@ -2,8 +2,7 @@ import sys
 
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon, QColor, QPalette, QCursor, QCloseEvent
-from PyQt5.QtWidgets import QApplication, QAction, qApp, QMainWindow, QHBoxLayout, QFrame, QSplitter, QWidget, \
-    QVBoxLayout, QListWidget, QAbstractItemView, QMenu
+from PyQt5.QtWidgets import QApplication, QAction, qApp, QMainWindow, QHBoxLayout, QFrame, QSplitter, QVBoxLayout, QAbstractItemView, QMenu
 
 import color_palette
 from callback.callbacks import *
@@ -230,18 +229,21 @@ class OpenedDialogWidget(QFrame):
         self.setLayout(layout)
 
     def message_context_menu_event(self, event):
+        message_item: MessageItemWidget = self.messages_list.currentItem()
         # same thing
         # noinspection PyAttributeOutsideInit
         self.menu = QMenu(self)
         reply_action = QAction('Reply', self)
         forward_action = QAction('Forward', self)
-        edit_action = QAction('Edit', self)
         delete_action = QAction('Delete', self)
-        message_item = self.messages_list.currentItem()
         delete_action.triggered.connect(lambda: delete_message_item_selected_callback(self.messages_list, message_item))
+
         self.menu.addAction(reply_action)
         self.menu.addAction(forward_action)
-        self.menu.addAction(edit_action)
+        if message_item.message.mine:
+            edit_action = QAction('Edit', self)
+            edit_action.triggered.connect(lambda: edit_message_item_selected_callback(self, message_item))
+            self.menu.addAction(edit_action)
         self.menu.addAction(delete_action)
         # add other required actions
         self.menu.popup(QCursor.pos())

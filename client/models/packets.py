@@ -4,12 +4,12 @@ from client.models.messages import Message
 
 
 class Packet(Jsonable):
-    def __init__(self, action=None, message=None):
+    def __init__(self, action: Action = None, message: Message = None):
         self.action = action
         self.message = message
 
     @staticmethod
-    def from_json_obj(json_obj):
+    def from_json_obj(json_obj: dict) -> Jsonable:
         return Packet(
             action=Action.from_json_obj(
                 json_obj=json_obj["action"]),
