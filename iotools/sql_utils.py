@@ -1,7 +1,7 @@
 from client import client_base
 from client.models.messages import Message
 from iotools.sql_base import SQLManager, ColumnTypes, DB_MESSAGING, DB_SETTINGS, DB_STORAGE, Query
-from models.models import Settings, Storage, Category, Setting
+from models.storage import Settings, Storage, Category, Setting
 
 
 def init_databases():

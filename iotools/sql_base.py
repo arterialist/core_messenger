@@ -3,6 +3,8 @@
 
 import sqlite3
 
+from models.logging import Logger
+
 DB_MESSAGING = "files/messaging.db"
 DB_SETTINGS = "files/settings.db"
 DB_STORAGE = "files/storage.db"
@@ -45,7 +47,7 @@ class SQLUtil:
 
     def create_table(self, table: str, columns: list = list(), types: list = list()):
         if len(columns) != len(types):
-            print("Columns and types have different size!")
+            Logger.get_channel("SQL", True).log("Columns and types have different size!")
             return
 
         with self.__connection:
@@ -81,7 +83,7 @@ class SQLUtil:
 
     def add_record(self, table: str, columns=list(), values=list()):
         if len(columns) != len(values):
-            print("Columns and values have different size!")
+            Logger.get_channel("SQL", True).log("Columns and values have different size!")
             return
 
         with self.__connection:
@@ -92,7 +94,7 @@ class SQLUtil:
 
     def edit_record(self, query: Query, table: str, columns=list(), values=list()):
         if len(columns) != len(values):
-            print("Columns and values have different size!")
+            Logger.get_channel("SQL", True).log("Columns and values have different size!")
             return
 
         with self.__connection:
@@ -112,7 +114,7 @@ class SQLUtil:
 
     @staticmethod
     def log_operation(file: str, query: str):
-        print("Executing query in {0} ->\n{1}".format(file, query))
+        Logger.get_channel("SQL", True).log("Executing query in {0} ->\n{1}".format(file, query))
 
     def close_db(self):
         self.__cursor.close()

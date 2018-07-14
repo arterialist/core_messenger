@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QWidget, QMainWindow, QListWidget, QHBoxLayout, QVBo
 
 import color_palette
 from iotools.storage import AppStorage
-from models.models import Setting
+from models.storage import Setting
 
 
 class SettingsWindow(QMainWindow):

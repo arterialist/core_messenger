@@ -10,7 +10,8 @@ from client import client_base
 from iotools.sql_base import SQLManager, DB_MESSAGING
 from iotools.sql_utils import init_databases, save_databases
 from iotools.storage import AppStorage
-from models.models import Category
+from models.logging import Logger
+from models.storage import Category
 from tools import full_strip
 from widgets.dialogs.dialogs_head import DialogsListHeadWidget, DialogsIncomingConnectionWidget
 from widgets.messages.message_input import MessageInputWidget
@@ -18,6 +19,8 @@ from widgets.windows.settings_window import SettingsWindow
 
 main_window = None
 settings_window = None
+Logger.get_channel("SQL", True).disable()
+general_log = Logger.get_channel("GENERAL", True)
 init_databases()
 
 
@@ -94,10 +97,10 @@ class MainWindow(QMainWindow):
             port = int(AppStorage.get_storage().get("port"))
 
         client_base.nickname = nickname
-        print('nickname: {}'.format(nickname))
+        general_log.log('nickname: {}'.format(nickname))
 
         client_base.local_port = int(port)
-        print('listening port: {}'.format(port))
+        general_log.log('listening port: {}'.format(port))
 
         AppStorage.get_storage().set("nickname", nickname)
         AppStorage.get_storage().set("port", port)

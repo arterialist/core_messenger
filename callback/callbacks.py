@@ -50,7 +50,6 @@ def dialog_item_changed_callback(current, window):
     messages_list = window.centralWidget().opened_dialog_frame.messages_list
     messages_list.clear()
     if current:
-        print(current.peer_id)
         messages = get_messages(current.peer_id)
 
         for message in messages:
