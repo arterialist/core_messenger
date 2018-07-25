@@ -5,9 +5,9 @@ from PyQt5.QtWidgets import QInputDialog, QMessageBox, QListWidget, QWidget
 
 from client import client_base
 from client.models.actions import *
-from client.models.messages import Message
+from client.models.messages import Message, Data
 from client.models.packets import Packet
-from iotools.sql_utils import delete_dialog, save_message, create_dialog, get_messages, delete_message, edit_message
+from iotools.sql_utils import delete_dialog, save_message, create_dialog, get_messages, delete_message, edit_message, update_dialog_info
 from tools import full_strip
 from widgets.dialogs.dialogs_list import DialogItemWidget
 from widgets.message_boxes.message_delete_box import DeleteMsgMessageBox
@@ -116,6 +116,25 @@ def new_message_callback(packet, window):
                 messages_list.takeItem(row)
                 messages_list.insertItem(row, MessageItemWidget(packet.message))
                 break
+    elif action == "info":
+        nickname = packet.data.content["nickname"]
+        port = packet.data.content["port"]
+        update_dialog_info(nickname, port, client_base.current_peer_id)
+        dialog_widget: DialogItemWidget = window.centralWidget().dialogs_list_frame.dialogs_list.currentItem()
+        dialog_widget.nickname = nickname
+        dialog_widget.port = port
+        dialog_widget.update_ui()
+        messages_list.viewport().setFocus()
+        if packet.data.content["request"]:
+            client_base.send_message(Packet(
+                message=Message(text=""),
+                action=PeerInfoAction(),
+                data=Data(content={
+                    "nickname": client_base.nickname,
+                    "port": client_base.local_port,
+                    "request": False
+                })
+            ))
 
 
 def invalid_message_callback(reason, message):
@@ -134,26 +153,26 @@ def delete_dialog_callback(peer_id):
 
 
 def delete_message_item_selected_callback(messages_list, message):
-    confirmation_dialog = DeleteMsgMessageBox(message.message.mine)
+    # that's ...
+    dialogs_list = messages_list \
+        .parentWidget() \
+        .parentWidget() \
+        .parentWidget() \
+        .parentWidget() \
+        .dialogs_list_frame \
+        .dialogs_list
+    dialog: DialogItemWidget = dialogs_list.currentItem()
+
+    confirmation_dialog = DeleteMsgMessageBox(message.message.mine, dialog.nickname if len(dialog.nickname) else None)
 
     result = confirmation_dialog.exec_()
 
     if result[0] == QMessageBox.Ok:
-        # that's ...
-        dialogs_list = messages_list \
-            .parentWidget() \
-            .parentWidget() \
-            .parentWidget() \
-            .parentWidget() \
-            .dialogs_list_frame \
-            .dialogs_list
-        dialog = dialogs_list.currentItem()
         delete_message(dialog.peer_id, message.message.message_id)
         messages_list.takeItem(messages_list.row(message))
-
-    if result[1]:
-        delete_message_msg = Message(message_id=message.message.message_id, timestamp=0)
-        client_base.send_message(Packet(action=DeleteMessageAction(), message=delete_message_msg))
+        if result[1]:
+            delete_message_msg = Message(message_id=message.message.message_id, timestamp=0)
+            client_base.send_message(Packet(action=DeleteMessageAction(), message=delete_message_msg))
 
 
 def edit_message_item_selected_callback(opened_dialog: QWidget, message_item: MessageItemWidget):

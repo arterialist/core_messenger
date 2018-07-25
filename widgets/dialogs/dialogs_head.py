@@ -1,3 +1,6 @@
+import hashlib
+import uuid
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPalette, QColor
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
@@ -80,11 +83,13 @@ class DialogsIncomingConnectionWidget(QWidget):
         self.setLayout(layout)
 
     def accept(self):
+        peer_id = hashlib.md5(str(uuid.uuid4()).encode('utf-8')).hexdigest()
+        sql_utils.create_dialog("", "", 0, peer_id)
         accept_incoming_connection()
         self.setHidden(True)
         address = client_base.current_connection_address
-        dialog = DialogItemWidget("", address[0], address[1], 0)
-        sql_utils.create_dialog(address[0], address[1], 0, dialog.peer_id)
+        dialog = DialogItemWidget("", address[0], address[1], 0, peer_id=peer_id)
+        sql_utils.update_dialog(address[0], address[1], 0, dialog.peer_id)
         dialogs_list = self.parentWidget().dialogs_list
         dialogs_list.addItem(dialog)
         dialogs_list.setCurrentItem(dialog)

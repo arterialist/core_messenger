@@ -18,8 +18,8 @@ def save_databases(settings: Settings, storage: Storage):
 def create_dialogs_table():
     SQLManager.get_instance(DB_MESSAGING) \
         .create_table("dialogs",
-                      ["host", "port", "chat_type", "peer_id"],
-                      [ColumnTypes.TEXT, ColumnTypes.NUMERIC, ColumnTypes.NUMERIC, ColumnTypes.TEXT])
+                      ["host", "port", "chat_type", "peer_id", "nickname", "listening_port"],
+                      [ColumnTypes.TEXT, ColumnTypes.NUMERIC, ColumnTypes.NUMERIC, ColumnTypes.TEXT, ColumnTypes.TEXT, ColumnTypes.NUMERIC])
 
 
 def create_settings_table():
@@ -100,10 +100,28 @@ def save_storage_to_db(storage: Storage):
 def create_dialog(host: str, port: str, chat_type: int, peer_id: str):
     SQLManager.get_instance(DB_MESSAGING).add_record(
         "dialogs",
-        ["host", "port", "chat_type", "peer_id"],
-        [host, port, chat_type, peer_id])
+        ["host", "port", "chat_type", "peer_id", "nickname", "listening_port"],
+        [host, port, chat_type, peer_id, "", ""])
     create_messages_table_for_dialog(peer_id)
     client_base.current_peer_id = peer_id
+
+
+def update_dialog(host: str, port: int, chat_type: int, peer_id: str):
+    SQLManager.get_instance(DB_MESSAGING).edit_record(
+        Query(["peer_id"], [peer_id]),
+        "dialogs",
+        ["host", "port", "chat_type"],
+        [host, port, chat_type]
+    )
+
+
+def update_dialog_info(nickname: str, port: int, peer_id: str):
+    SQLManager.get_instance(DB_MESSAGING).edit_record(
+        Query(["peer_id"], [peer_id]),
+        "dialogs",
+        ["nickname", "listening_port"],
+        [nickname, port]
+    )
 
 
 def delete_dialog(peer_id: str):

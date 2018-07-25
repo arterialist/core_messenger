@@ -21,10 +21,13 @@ class DialogItemWidget(QListWidgetItem):
         self.port = port
         self.chat_type = chat_type
         self.peer_id = peer_id if peer_id else hashlib.md5(str(uuid.uuid4()).encode('utf-8')).hexdigest()
-        self.init_ui()
+        self.__init_ui()
 
-    def init_ui(self):
+    def __init_ui(self):
         self.setText('Dialog with {0}\n{1}:{2}'.format(self.nickname, self.host, self.port))
         self.setFont(QFont('sans-serif', 10))
         self.setIcon(QIcon(chat_type_icons[self.chat_type]))
         self.setBackground(QColor(color_palette.primary))
+
+    def update_ui(self):
+        self.__init_ui()

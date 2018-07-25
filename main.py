@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QApplication, QAction, qApp, QMainWindow, QHBoxLayou
 import color_palette
 from callback.callbacks import *
 from client import client_base
+from client.models.messages import Data
 from iotools.sql_base import SQLManager, DB_MESSAGING
 from iotools.sql_utils import init_databases, save_databases
 from iotools.storage import AppStorage
@@ -172,7 +173,7 @@ class DialogsListRootWidget(QFrame):
 
         dialogs = SQLManager.get_instance(DB_MESSAGING).select_all("dialogs")
         for item in dialogs:
-            self.dialogs_list.addItem(DialogItemWidget("", item[0], item[1], item[2], peer_id=item[3]))
+            self.dialogs_list.addItem(DialogItemWidget(item[4], item[0], item[1], item[2], peer_id=item[3]))
 
         layout.addWidget(self.head)
         layout.addWidget(self.incoming_connection)
@@ -185,8 +186,18 @@ class DialogsListRootWidget(QFrame):
         # this is necessary!
         # noinspection PyAttributeOutsideInit
         self.menu = QMenu(self)
+
         close_action = QAction('Disconnect', self)
         close_action.triggered.connect(lambda: self.remove_dialog(self.dialogs_list.currentItem()))
+
+        share_info_action = QAction('Share Your Info', self)
+        share_info_action.triggered.connect(lambda: self.share_info())
+
+        request_info_action = QAction('Request Peer Info', self)
+        request_info_action.triggered.connect(lambda: self.request_info())
+
+        self.menu.addAction(share_info_action)
+        self.menu.addAction(request_info_action)
         self.menu.addAction(close_action)
         # add other required actions
         self.menu.popup(QCursor.pos())
@@ -195,6 +206,24 @@ class DialogsListRootWidget(QFrame):
         if dialog:
             delete_dialog_callback(dialog.peer_id)
             self.dialogs_list.takeItem(self.dialogs_list.row(dialog))
+
+    @staticmethod
+    def send_info(request: bool = False):
+        client_base.send_message(Packet(
+            message=Message(text=""),
+            action=PeerInfoAction(),
+            data=Data(content={
+                "nickname": client_base.nickname,
+                "port": client_base.local_port,
+                "request": request
+            })
+        ))
+
+    def share_info(self):
+        self.send_info()
+
+    def request_info(self):
+        self.send_info(True)
 
 
 class OpenedDialogWidget(QFrame):
