@@ -15,17 +15,24 @@ class Message(Jsonable):
 
 
 class Attachment(Jsonable):
-    def __init__(self, link=None):
+    def __init__(self, link: str = None):
         self.link = link
 
 
 class Photo(Attachment):
-    def __init__(self, link=None, image_format=None):
+    def __init__(self, link: str = None, image_format: str = None):
         super().__init__(link)
         self.image_format = image_format
 
 
 class Audio(Attachment):
-    def __init__(self, link, duration=None):
+    def __init__(self, link: str, duration: int = None):
         super().__init__(link)
         self.duration = duration
+
+
+class Data(Jsonable):
+    def __init__(self, content: dict = None):
+        if content is None:
+            content = {}
+        self.content = content

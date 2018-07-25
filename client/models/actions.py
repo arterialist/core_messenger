@@ -29,3 +29,8 @@ class ForwardMessageAction(Action):
 class DeleteMessageAction(Action):
     def __init__(self):
         super().__init__(action="delete")
+
+
+class PeerInfoAction(Action):
+    def __init__(self):
+        super().__init__(action="info")
