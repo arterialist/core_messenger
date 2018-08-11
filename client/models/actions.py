@@ -34,3 +34,8 @@ class DeleteMessageAction(Action):
 class PeerInfoAction(Action):
     def __init__(self):
         super().__init__(action="info")
+
+
+class ChatSyncAction(Action):
+    def __init__(self):
+        super().__init__(action="chat_sync")

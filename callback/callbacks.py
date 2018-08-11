@@ -1,5 +1,4 @@
 import copy
-import re
 
 from PyQt5.QtWidgets import QInputDialog, QMessageBox, QListWidget, QWidget
 
@@ -18,8 +17,7 @@ def new_dialog_click_callback(widget):
     while 1:
         host, ok = QInputDialog.getText(widget, "Host", 'Enter Host:')
         if ok:
-            ip_regexp = r"\b(?:(?:2(?:[0-4][0-9]|5[0-5])|[0-1]?[0-9]?[0-9])\.){3}(?:(?:2([0-4][0-9]|5[0-5])|[0-1]?[0-9]?[0-9]))\b"
-            if len(full_strip(host)) and re.match(ip_regexp, full_strip(host)):
+            if len(full_strip(host)):
                 break
         else:
             return
