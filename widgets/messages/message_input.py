@@ -36,5 +36,6 @@ class MessageInputWidget(QFrame):
 
     def send_button_clicked(self):
         dialog = self.parentWidget().parentWidget().parentWidget().parentWidget().dialogs_list_frame.dialogs_list.currentItem()
-        current_peer_id = dialog.peer_id
-        send_button_clicked_callback(self, current_peer_id)
+        if dialog:
+            current_peer_id = dialog.peer_id
+            send_button_clicked_callback(self, current_peer_id)
