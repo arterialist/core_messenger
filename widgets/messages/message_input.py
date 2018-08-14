@@ -25,7 +25,7 @@ class MessageInputWidget(QFrame):
         p = self.send_button.palette()
         p.setColor(QPalette.Button, QColor(color_palette.primary_light))
         self.send_button.setPalette(p)
-        self.send_button.clicked.connect(lambda: send_button_clicked_callback(self))
+        self.send_button.clicked.connect(lambda: self.send_button_clicked())
         self.send_button.setShortcut('Ctrl+Return')
 
         layout.addWidget(self.message_input)
@@ -33,3 +33,8 @@ class MessageInputWidget(QFrame):
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.setLayout(layout)
+
+    def send_button_clicked(self):
+        dialog = self.parentWidget().parentWidget().parentWidget().parentWidget().dialogs_list_frame.dialogs_list.currentItem()
+        current_peer_id = dialog.peer_id
+        send_button_clicked_callback(self, current_peer_id)

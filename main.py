@@ -2,7 +2,8 @@ import sys
 
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon, QColor, QPalette, QCursor, QCloseEvent
-from PyQt5.QtWidgets import QApplication, QAction, qApp, QMainWindow, QHBoxLayout, QFrame, QSplitter, QVBoxLayout, QAbstractItemView, QMenu
+from PyQt5.QtWidgets import QApplication, QAction, qApp, QMainWindow, QHBoxLayout, QFrame, QSplitter, QVBoxLayout, QAbstractItemView, QMenu, \
+    QTabWidget
 
 import color_palette
 from callback.callbacks import *
@@ -14,7 +15,7 @@ from iotools.storage import AppStorage
 from models.logging import Logger
 from models.storage import Category
 from tools import full_strip
-from widgets.dialogs.dialogs_head import DialogsListHeadWidget, DialogsIncomingConnectionWidget
+from widgets.dialogs.dialogs_head import DialogsListHeadWidget
 from widgets.messages.message_input import MessageInputWidget
 from widgets.windows.settings_window import SettingsWindow
 
@@ -107,7 +108,7 @@ class MainWindow(QMainWindow):
         AppStorage.get_storage().set("port", port)
 
         client_base.init_socket()
-        client_base.new_message_callback = lambda message: new_message_callback(message, main_window)
+        client_base.new_message_callback = lambda message, peer: new_message_callback(message, peer, main_window)
         client_base.invalid_message_callback = invalid_message_callback
 
     @staticmethod
@@ -146,20 +147,20 @@ class RootWidget(QWidget):
         self.setLayout(layout)
 
 
+# noinspection PyAttributeOutsideInit
 class DialogsListRootWidget(QFrame):
     def __init__(self):
         super().__init__()
         self.dialogs_list = QListWidget()
-        self.incoming_connection = DialogsIncomingConnectionWidget(main_window)
+        self.incoming_list = QListWidget()
         self.head = DialogsListHeadWidget()
+        self.tabs = QTabWidget()
         self.init_ui()
 
     def init_ui(self):
         layout = QVBoxLayout()
 
-        client_base.incoming_connection_callback = lambda: handle_incoming_connection_callback(self)
-
-        self.incoming_connection.setHidden(True)
+        # dialogs list setup
         p = self.dialogs_list.palette()
         p.setColor(QPalette.Base, QColor(color_palette.primary))
         self.dialogs_list.setPalette(p)
@@ -175,10 +176,26 @@ class DialogsListRootWidget(QFrame):
         for item in dialogs:
             self.dialogs_list.addItem(DialogItemWidget(item[4], item[0], item[1], item[2], peer_id=item[3]))
 
+        # incoming list setup
+        p = self.incoming_list.palette()
+        p.setColor(QPalette.Base, QColor(color_palette.primary))
+        self.incoming_list.setPalette(p)
+
+        self.incoming_list.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.incoming_list.customContextMenuRequested.connect(self.incoming_context_menu_event)
+
+        # tabs setup
+        p = self.tabs.palette()
+        p.setColor(QPalette.Button, QColor(color_palette.primary))
+        self.tabs.setPalette(p)
+        self.tabs.addTab(self.dialogs_list, "Dialogs")
+        self.tabs.addTab(self.incoming_list, "Incoming Connections")
+
         layout.addWidget(self.head)
-        layout.addWidget(self.incoming_connection)
-        layout.addWidget(self.dialogs_list)
+        layout.addWidget(self.tabs)
         layout.setContentsMargins(0, 5, 0, 0)
+
+        client_base.incoming_connection_callback = lambda address, connection: handle_incoming_connection_callback(self.incoming_list, address)
 
         self.setLayout(layout)
 
@@ -186,15 +203,16 @@ class DialogsListRootWidget(QFrame):
         # this is necessary!
         # noinspection PyAttributeOutsideInit
         self.menu = QMenu(self)
+        peer_id = self.dialogs_list.currentItem().peer_id
 
         close_action = QAction('Disconnect', self)
         close_action.triggered.connect(lambda: self.remove_dialog(self.dialogs_list.currentItem()))
 
         share_info_action = QAction('Share Your Info', self)
-        share_info_action.triggered.connect(lambda: self.share_info())
+        share_info_action.triggered.connect(lambda: self.share_info(peer_id))
 
         request_info_action = QAction('Request Peer Info', self)
-        request_info_action.triggered.connect(lambda: self.request_info())
+        request_info_action.triggered.connect(lambda: self.request_info(peer_id))
 
         self.menu.addAction(share_info_action)
         self.menu.addAction(request_info_action)
@@ -202,14 +220,32 @@ class DialogsListRootWidget(QFrame):
         # add other required actions
         self.menu.popup(QCursor.pos())
 
+    def incoming_context_menu_event(self, event):
+        item = self.incoming_list.currentItem()
+        if item:
+            # noinspection PyAttributeOutsideInit
+            self.menu = QMenu(self)
+
+            address = (item.text().split(":")[0], int(item.text().split(":")[1]))
+
+            accept_action = QAction("Accept", self)
+            accept_action.triggered.connect(lambda: accept_incoming_connection(self, address))
+
+            decline_action = QAction("Decline", self)
+            decline_action.triggered.connect(lambda: decline_incoming_connection(self, address))
+
+            self.menu.addAction(accept_action)
+            self.menu.addAction(decline_action)
+            self.menu.popup(QCursor.pos())
+
     def remove_dialog(self, dialog):
         if dialog:
             delete_dialog_callback(dialog.peer_id)
             self.dialogs_list.takeItem(self.dialogs_list.row(dialog))
 
     @staticmethod
-    def send_info(request: bool = False):
-        client_base.send_message(Packet(
+    def send_info(peer_id: str, request: bool = False):
+        client_base.send_message(peer_id, Packet(
             message=Message(text=""),
             action=PeerInfoAction(),
             data=Data(content={
@@ -219,11 +255,11 @@ class DialogsListRootWidget(QFrame):
             })
         ))
 
-    def share_info(self):
-        self.send_info()
+    def share_info(self, peer_id):
+        self.send_info(peer_id)
 
-    def request_info(self):
-        self.send_info(True)
+    def request_info(self, peer_id):
+        self.send_info(peer_id, True)
 
 
 class OpenedDialogWidget(QFrame):
