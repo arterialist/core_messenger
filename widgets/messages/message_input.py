@@ -1,5 +1,7 @@
-from PyQt5.QtGui import QPalette, QColor
-from PyQt5.QtWidgets import QPushButton, QTextEdit, QFrame, QHBoxLayout
+import platform
+
+from PyQt5.QtGui import QPalette, QColor, QKeySequence
+from PyQt5.QtWidgets import QPushButton, QTextEdit, QFrame, QHBoxLayout, QShortcut
 
 import color_palette
 from callback.callbacks import send_button_clicked_callback
@@ -18,15 +20,30 @@ class MessageInputWidget(QFrame):
         palette = self.message_input.palette()
         palette.setColor(QPalette.Base, QColor(color_palette.primary_light))
         self.message_input.setPalette(palette)
-        self.message_input.setTextColor(QColor('#ffffff'))
+        self.message_input.setStyleSheet("color: #DDD;")
         self.message_input.setAutoFormatting(QTextEdit.AutoAll)
 
-        self.send_button.setFixedWidth(50)
+        self.send_button.setFixedWidth(60)
         p = self.send_button.palette()
         p.setColor(QPalette.Button, QColor(color_palette.primary_light))
         self.send_button.setPalette(p)
         self.send_button.clicked.connect(lambda: self.send_button_clicked())
-        self.send_button.setShortcut('Ctrl+Return')
+        shortcut = QShortcut(QKeySequence("Ctrl+Return"), self.send_button)
+        shortcut.activated.connect(lambda: self.send_button_clicked())
+        shortcut.setEnabled(True)
+        if platform.system() != "Linux":
+            self.send_button.setStyleSheet("""
+                    QPushButton {
+                        border: 2px solid """ + color_palette.primary + """;
+                        border-radius: 3px;
+                        background-color: """ + color_palette.primary_light + """;
+                        color: #DDD;
+                    }
+    
+                    QPushButton:pressed {
+                        background-color: """ + color_palette.primary_dark + """;
+                    }
+                """)
 
         layout.addWidget(self.message_input)
         layout.addWidget(self.send_button)
@@ -39,3 +56,4 @@ class MessageInputWidget(QFrame):
         if dialog:
             current_peer_id = dialog.peer_id
             send_button_clicked_callback(self, current_peer_id)
+        self.message_input.setFocus()

@@ -1,5 +1,6 @@
 import copy
 
+from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QInputDialog, QMessageBox, QListWidget, QWidget, QListWidgetItem
 
 from client import client_base
@@ -60,6 +61,7 @@ def dialog_item_changed_callback(current, window):
 
         for message in messages:
             messages_list.addItem(MessageItemWidget(message))
+    messages_list.scrollToBottom()
 
 
 def send_button_clicked_callback(widget, peer_id):
@@ -83,7 +85,9 @@ def toggle_listening_callback():
 
 
 def handle_incoming_connection_callback(incoming_list_widget: QListWidget, address):
-    incoming_list_widget.addItem(QListWidgetItem("{}:{}".format(address[0], address[1])))
+    item = QListWidgetItem("{}:{}".format(address[0], address[1]))
+    item.setForeground(QColor("#DDD"))
+    incoming_list_widget.addItem(item)
 
 
 def accept_incoming_connection(widget, address):

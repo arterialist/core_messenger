@@ -1,3 +1,5 @@
+import platform
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPalette, QColor
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
@@ -16,14 +18,27 @@ class DialogsListHeadWidget(QWidget):
         layout = QHBoxLayout(self)
 
         dialogs_label = QLabel(self)
-        dialogs_label.setText("Dialogs")
+        dialogs_label.setText("Create dialog")
         dialogs_label.setFixedHeight(30)
 
         self.new_dialog_button.setFixedHeight(30)
         self.new_dialog_button.setFixedWidth(60)
-        self.new_dialog_button.setText("NEW")
+        self.new_dialog_button.setText("Client")
         self.new_dialog_button.setShortcut('Ctrl+N')
         self.new_dialog_button.clicked.connect(lambda: new_dialog_click_callback(self))
+        if platform.system() != "Linux":
+            self.new_dialog_button.setStyleSheet("""
+                QPushButton {
+                    border: 2px solid """ + color_palette.primary + """;
+                    border-radius: 3px;
+                    background-color: """ + color_palette.primary_light + """;
+                    color: #DDD;
+                }
+
+                QPushButton:pressed {
+                    background-color: """ + color_palette.primary_dark + """;
+                }
+            """)
         palette = self.new_dialog_button.palette()
         palette.setColor(QPalette.Button, QColor(color_palette.primary_light))
         self.new_dialog_button.setPalette(palette)

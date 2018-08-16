@@ -1,7 +1,8 @@
+import platform
 import sys
 
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QIcon, QColor, QPalette, QCursor, QCloseEvent
+from PyQt5.QtGui import QIcon, QPalette, QCursor, QCloseEvent
 from PyQt5.QtWidgets import QApplication, QAction, qApp, QMainWindow, QHBoxLayout, QFrame, QSplitter, QVBoxLayout, QAbstractItemView, QMenu, \
     QTabWidget
 
@@ -61,7 +62,7 @@ class MainWindow(QMainWindow):
 
         self.setGeometry(100, 100, 800, 800)
         self.setWindowTitle('Core Messenger')
-        self.setWindowIcon(QIcon('images/telegram_icon.png'))
+        self.setWindowIcon(QIcon('images/app-icon.png'))
 
     def show(self):
         super().show()
@@ -185,6 +186,13 @@ class DialogsListRootWidget(QFrame):
         self.incoming_list.customContextMenuRequested.connect(self.incoming_context_menu_event)
 
         # tabs setup
+        if platform.system() != "Linux":
+            self.tabs.setStyleSheet(
+                'QTabBar::tab:selected {background-color: ' + color_palette.primary + ';} ' +
+                'QTabBar::tab:!selected {background-color: ' + color_palette.primary_light + ';} ' +
+                'QTabWidget::pane { background-color: ' + color_palette.primary + ';} ' +
+                'QTabWidget::pane { border: none;} '
+            )
         p = self.tabs.palette()
         p.setColor(QPalette.Button, QColor(color_palette.primary))
         self.tabs.setPalette(p)
@@ -318,6 +326,12 @@ class OpenedDialogWidget(QFrame):
 
 
 if __name__ == '__main__':
+    if platform.system() == "Windows":
+        import ctypes
+
+        win_app_id = 'arterialist.core_messenger'
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(win_app_id)
+
     app = QApplication(sys.argv)
     main_window = MainWindow()
     settings_window = SettingsWindow()
