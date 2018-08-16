@@ -135,7 +135,7 @@ def p2p_connect(remote_host: str, remote_port: int) -> tuple:
     except socket.gaierror as e:
         return str(e), None
 
-    sock.setblocking(False)
+    sock.settimeout(2)
     peer = Client(remote_host, remote_port)
     incoming_message_thread = threading.Thread(target=p2p_new_message_listener, args=[peer, sock])
     incoming_message_thread.setDaemon(True)
@@ -162,7 +162,7 @@ def server_connect(remote_host: str, remote_port: int) -> tuple:
     except socket.gaierror as e:
         return str(e), None
 
-    sock.setblocking(False)
+    sock.settimeout(2)
     peer = Server(remote_host, remote_port)
     incoming_message_thread = threading.Thread(target=server_new_message_listener, args=[peer, sock])
     incoming_message_thread.setDaemon(True)
@@ -185,7 +185,7 @@ def accept_connection(address) -> tuple:
         return "Invalid address", None
 
     incoming_connections.pop(address)
-    connection.setblocking(False)
+    connection.settimeout(2)
     peer = Peer(address[0], address[1])
     incoming_message_thread = threading.Thread(target=p2p_new_message_listener, args=[peer, connection])
 
