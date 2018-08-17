@@ -1,20 +1,24 @@
 """
 this file is created to make functionality growth fast
 """
+import copy
 
 
 def socket_send_data(to, what, through=list()):
-    through.reverse()
-    for action in through:
-        what = action.process(what)
+    through_copy = copy.deepcopy(through)
+    through_copy.reverse()
+    what_copy = copy.deepcopy(what)
+    for action in through_copy:
+        what_copy = action.process(what_copy)
 
     if to:
-        to.sendall(what)
-    through.reverse()
+        to.sendall(what_copy)
 
 
 def socket_handle_received(from_s, what, through=list()):
-    for action in through:
-        what = action.process_s(what, from_s)
+    through_copy = copy.deepcopy(through)
+    what_copy = copy.deepcopy(what)
+    for action in through_copy:
+        what_copy = action.process_s(what_copy, from_s)
 
-    return what
+    return what_copy
