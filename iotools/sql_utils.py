@@ -133,19 +133,19 @@ def delete_dialog(peer_id: str):
 def create_messages_table_for_dialog(peer_id: str):
     SQLManager.get_instance(DB_MESSAGING).create_table(
         "messages_{}".format(peer_id),
-        ["message_id", "timestamp", "text", "mine"],
-        [ColumnTypes.TEXT, ColumnTypes.NUMERIC, ColumnTypes.TEXT, ColumnTypes.INTEGER])
+        ["message_id", "timestamp", "text", "mine", "service"],
+        [ColumnTypes.TEXT, ColumnTypes.NUMERIC, ColumnTypes.TEXT, ColumnTypes.INTEGER, ColumnTypes.INTEGER])
 
 
 def delete_messages_table_for_dialog(peer_id: str):
     SQLManager.get_instance(DB_MESSAGING).delete_table("messages_{}".format(peer_id))
 
 
-def save_message(peer_id: str, message: Message):
+def save_message(peer_id: str, message: Message, service: bool = False):
     SQLManager.get_instance(DB_MESSAGING).add_record(
         "messages_{}".format(peer_id),
-        ["message_id", "timestamp", "text", "mine"],
-        [message.message_id, message.timestamp, message.text.replace("'", "''"), 1 if message.mine else 0])
+        ["message_id", "timestamp", "text", "mine", "service"],
+        [message.message_id, message.timestamp, message.text.replace("'", "''"), 1 if message.mine else 0, 1 if service else 0])
 
 
 def delete_message(peer_id: str, message_id: str):
@@ -167,6 +167,6 @@ def get_messages(peer_id):
     messages = SQLManager.get_instance(DB_MESSAGING).select_all("messages_{}".format(peer_id))
     res = list()
     for msg in messages:
-        res.append(Message(message_id=msg[0], timestamp=msg[1], text=msg[2], mine=msg[3] == 1))
+        res.append((Message(message_id=msg[0], timestamp=msg[1], text=msg[2], mine=msg[3] == 1), bool(msg[4])))
 
     return res

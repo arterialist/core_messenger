@@ -3,16 +3,21 @@ from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QListWidgetItem
 
 import color_palette
+from client.models.messages import Message
 
 
 class MessageItemWidget(QListWidgetItem):
-    def __init__(self, message):
+    def __init__(self, message: Message, service: bool = False):
         super().__init__()
         self.message = message
-        self.init_ui(message)
+        self.service = service
+        self.init_ui()
 
-    def init_ui(self, message):
-        self.setText(message.text)
-        self.setBackground(QColor(color_palette.primary if message.mine else color_palette.primary_dark))
-        self.setTextAlignment(Qt.AlignRight if message.mine else Qt.AlignLeft)
-        self.setForeground(QColor("#ffffff"))
+    def init_ui(self):
+        self.setText(self.message.text)
+        self.setBackground(QColor(color_palette.primary if self.message.mine else color_palette.primary_dark))
+        alignment = Qt.AlignCenter
+        if not self.service:
+            alignment = Qt.AlignRight if self.message.mine else Qt.AlignLeft
+        self.setTextAlignment(alignment)
+        self.setForeground(QColor("#DDD") if self.service else QColor("#FFF"))

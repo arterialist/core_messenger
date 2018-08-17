@@ -60,7 +60,7 @@ def dialog_item_changed_callback(current, window):
         messages = get_messages(current.peer_id)
 
         for message in messages:
-            messages_list.addItem(MessageItemWidget(message))
+            messages_list.addItem(MessageItemWidget(message[0], service=message[1]))
     messages_list.scrollToBottom()
 
 
@@ -157,6 +157,10 @@ def new_message_callback(packet: Packet, peer: Peer, window):
                     "request": False
                 })
             ))
+    elif action == "service":
+        messages_list.addItem(MessageItemWidget(packet.message, True))
+        messages_list.scrollToBottom()
+        save_message(peer_id, packet.message, True)
 
 
 def invalid_message_callback(reason, message, peer):
