@@ -24,6 +24,7 @@ class MessageInputWidget(QFrame):
         self.message_input.setAutoFormatting(QTextEdit.AutoAll)
 
         self.send_button.setFixedWidth(60)
+        self.send_button.setFixedHeight(30)
         p = self.send_button.palette()
         p.setColor(QPalette.Button, QColor(color_palette.primary_light))
         self.send_button.setPalette(p)
