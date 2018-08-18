@@ -65,6 +65,9 @@ def dialog_item_changed_callback(current, window):
 
 
 def send_button_clicked_callback(widget, peer_id):
+    if peer_id not in client_base.peers.keys():
+        return
+
     message_text = full_strip(widget.message_input.toPlainText())
     widget.message_input.clear()
     if not len(message_text):
