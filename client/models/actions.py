@@ -49,3 +49,8 @@ class ServiceAction(Action):
 class DisconnectAction(Action):
     def __init__(self):
         super().__init__(action="disconnect")
+
+
+class ConnectAction(Action):
+    def __init__(self):
+        super().__init__(action="connect")
