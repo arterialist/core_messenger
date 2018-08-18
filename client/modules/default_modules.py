@@ -30,12 +30,12 @@ class Base64EncodeModule(BaseModule):
 
     def process_s(self, data, sock):
         super().process_s(data, sock)
-        if data.message.text:
+        if data.message and data.message.text:
             data.message.text = base64.b64decode(data.message.text.encode()).decode()
         return data
 
     def process(self, data):
         super().process(data)
-        if data.message.text:
+        if data.message and data.message.text:
             data.message.text = base64.b64encode(data.message.text.encode()).decode()
         return data

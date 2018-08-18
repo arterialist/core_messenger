@@ -44,3 +44,8 @@ class ChatSyncAction(Action):
 class ServiceAction(Action):
     def __init__(self):
         super().__init__(action="service")
+
+
+class DisconnectAction(Action):
+    def __init__(self):
+        super().__init__(action="disconnect")

@@ -27,18 +27,13 @@ invalid_message_callback = None
 peer_disconnected_callback = None
 
 peers = dict()
-
 incoming_connections = dict()
-
-
-class DummySocket:
-    def close(self):
-        pass
+sockets = dict()
 
 
 def init_socket():
     global sock
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock = socket.socket()
 
 
 # noinspection PyCallingNonCallable
@@ -69,6 +64,8 @@ def p2p_new_message_listener(peer: Client, connection: socket):
                 peer_disconnected_callback()
             if peer.peer_id in peers.keys():
                 peers.pop(peer.peer_id)
+            if (peer.ip, peer.port) in sockets.keys():
+                sockets.pop((peer.ip, peer.port))
             break
         try:
             recv_msg = layers.socket_handle_received(connection, data.decode('utf8'), loaded_modules)
@@ -86,14 +83,35 @@ def p2p_new_message_listener(peer: Client, connection: socket):
 
 
 # noinspection PyCallingNonCallable
-def server_new_message_listener(peer: Server):
+def server_new_message_listener(peer: Server, connection: socket):
     while peer.peer_id in peers.keys():
-        data = sock.recv(4096)
         try:
+            data = connection.recv(4096)
+        except OSError:
+            continue
+        reason = None
+        if data == b'':
+            print('Connection closed')
+            if peer_disconnected_callback:
+                peer_disconnected_callback()
+            if peer.peer_id in peers.keys():
+                peers.pop(peer.peer_id)
+            if (peer.ip, peer.port) in sockets.keys():
+                sockets.pop((peer.ip, peer.port))
+            break
+        try:
+            recv_msg = layers.socket_handle_received(connection, data.decode('utf8'), loaded_modules)
             if new_message_callback:
-                new_message_callback('\n' + data.decode('utf8'), peer)
+                new_message_callback(recv_msg, peer)
         except UnicodeDecodeError:
-            print('Corrupted message')
+            reason = "Corrupted message"
+        except JSONDecodeError:
+            reason = "Received non-JSON message (raw connection?)"
+        except KeyError:
+            reason = "Invalid JSON schema"
+        finally:
+            if reason and invalid_message_callback:
+                invalid_message_callback(reason, data.decode("utf8"), peer)
 
 
 def socket_listen_off():
@@ -128,22 +146,35 @@ def p2p_connect(remote_host: str, remote_port: int) -> tuple:
     if len(peers.keys()) == 1024:
         return "Reached maximum connections limit", None
 
-    try:
-        sock.connect((remote_host, remote_port))
-    except ConnectionRefusedError:
-        return "Client is offline", None
-    except socket.gaierror as e:
-        return str(e), None
+    address = (remote_host, remote_port)
 
-    sock.settimeout(2)
+    if address in sockets.keys():
+        connection, connected = sockets[address]["connection"], sockets[address]["used"]
+        if connected:
+            return "Already connected to {}:{}".format(address[0], address[1]), None
+        sockets[address]["used"] = True
+    else:
+        connection = socket.socket()
+        try:
+            connection.connect(address)
+        except ConnectionRefusedError:
+            return "Client is offline", None
+        except socket.gaierror as e:
+            return str(e), None
+        connection.settimeout(30)
+        sockets[address] = {
+            "connection": connection,
+            "used": True
+        }
+
     peer = Client(remote_host, remote_port)
-    incoming_message_thread = threading.Thread(target=p2p_new_message_listener, args=[peer, sock])
+    incoming_message_thread = threading.Thread(target=p2p_new_message_listener, args=[peer, connection])
     incoming_message_thread.setDaemon(True)
 
     peers[peer.peer_id] = {
         "peer": peer,
         "thread": incoming_message_thread,
-        "socket": sock
+        "socket": connection
     }
 
     incoming_message_thread.start()
@@ -155,22 +186,36 @@ def server_connect(remote_host: str, remote_port: int) -> tuple:
     if len(peers.keys()) == 1024:
         return "Reached maximum connections limit", None
 
-    try:
-        sock.connect((remote_host, remote_port))
-    except ConnectionRefusedError:
-        return "Server is offline", None
-    except socket.gaierror as e:
-        return str(e), None
+    address = (remote_host, remote_port)
 
-    sock.settimeout(2)
+    if address in sockets.keys():
+        connection, connected = sockets[address]["connection"], sockets[address]["used"]
+        if connected:
+            return "Already connected to {}:{}".format(address[0], address[1]), None
+        sockets[address]["used"] = True
+    else:
+        connection = socket.socket()
+        try:
+            connection.connect(address)
+        except ConnectionRefusedError:
+            return "Server is offline", None
+        except socket.gaierror as e:
+            return str(e), None
+        connection.settimeout(30)
+        sockets[address] = {
+            "connection": connection,
+            "used": True
+        }
+
+    connection.settimeout(30)
     peer = Server(remote_host, remote_port)
-    incoming_message_thread = threading.Thread(target=server_new_message_listener, args=[peer, sock])
+    incoming_message_thread = threading.Thread(target=server_new_message_listener, args=[peer, connection])
     incoming_message_thread.setDaemon(True)
 
     peers[peer.peer_id] = {
         "peer": peer,
         "thread": incoming_message_thread,
-        "socket": sock
+        "socket": connection
     }
 
     incoming_message_thread.start()
@@ -185,7 +230,7 @@ def accept_connection(address) -> tuple:
         return "Invalid address", None
 
     incoming_connections.pop(address)
-    connection.settimeout(2)
+    connection.settimeout(30)
     peer = Peer(address[0], address[1])
     incoming_message_thread = threading.Thread(target=p2p_new_message_listener, args=[peer, connection])
 
@@ -203,7 +248,7 @@ def accept_connection(address) -> tuple:
 
 def decline_connection(address):
     if address in incoming_connections.keys():
-        incoming_connections.get(address, DummySocket()).close()
+        incoming_connections[address].close()
         incoming_connections.pop(address)
 
 
@@ -216,9 +261,12 @@ def send_message(peer_id, message):
 def disconnect(peer: Peer):
     if peer.peer_id in peers.keys():
         peers[peer.peer_id]["thread"].join(0)
-        peers[peer.peer_id]["socket"].shutdown(socket.SHUT_RDWR)
-        peers[peer.peer_id]["socket"].close()
-        peers.pop(peer.peer_id)
+        try:
+            peers.pop(peer.peer_id)
+        except KeyError:
+            pass
+    if (peer.ip, peer.port) in sockets.keys():
+        sockets[(peer.ip, peer.port)]["used"] = False
 
 
 def finish():
