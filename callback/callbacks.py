@@ -1,4 +1,5 @@
 import copy
+from typing import Optional
 
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QInputDialog, QMessageBox, QListWidget, QWidget, QListWidgetItem
@@ -15,14 +16,14 @@ from widgets.message_boxes.message_delete_box import DeleteMsgMessageBox
 from widgets.messages.messages_list import MessageItemWidget
 
 
-def new_dialog_click_callback(widget):
+def get_address(widget) -> Optional[tuple]:
     while 1:
         host, ok = QInputDialog.getText(widget, "Host", 'Enter Host:')
         if ok:
             if len(full_strip(host)):
                 break
         else:
-            return
+            return None
 
     while 1:
         port, ok = QInputDialog.getText(widget, "Port", 'Enter Port:')
@@ -33,13 +34,46 @@ def new_dialog_click_callback(widget):
                     and int(port) not in (21, 22, 80, 443):
                 break
         else:
-            return
+            return None
 
-    error, peer = client_base.p2p_connect(host, int(port))
+    return host, int(port)
+
+
+def new_dialog_click_callback(widget):
+    address = get_address(widget)
+
+    if not address:
+        return
+
+    error, peer = client_base.p2p_connect(address[0], address[1])
 
     if peer:
         dialog = DialogItemWidget("", peer.ip, peer.port, 0, peer_id=peer.peer_id)
-        create_dialog(host, port, 0, peer.peer_id)
+        create_dialog(address[0], address[1], 0, peer.peer_id)
+        dialogs_list = widget.parentWidget().dialogs_list
+        dialogs_list.addItem(dialog)
+        dialogs_list.setCurrentItem(dialog)
+        messages_list = widget.parentWidget().parentWidget().parentWidget().opened_dialog_frame.messages_list
+        messages_list.clear()
+    else:
+        alert_box = QMessageBox()
+        alert_box.setWindowTitle("Error")
+        alert_box.setText(error)
+        alert_box.setStandardButtons(QMessageBox.Ok)
+        alert_box.exec_()
+
+
+def new_chat_click_callback(widget):
+    address = get_address(widget)
+
+    if not address:
+        return
+
+    error, peer = client_base.server_connect(address[0], address[1])
+
+    if peer:
+        dialog = DialogItemWidget("", peer.ip, peer.port, 2, peer_id=peer.peer_id)
+        create_dialog(address[0], address[1], 2, peer.peer_id)
         dialogs_list = widget.parentWidget().dialogs_list
         dialogs_list.addItem(dialog)
         dialogs_list.setCurrentItem(dialog)
@@ -121,18 +155,18 @@ def new_message_callback(packet: Packet, peer: Peer, window):
     action = packet.action.action  # yes, I know
     peer_id = peer.peer_id
 
-    if action == "new":
+    if action == NewMessageAction().action:
         messages_list.addItem(MessageItemWidget(packet.message))
         messages_list.scrollToBottom()
         save_message(peer_id, packet.message)
-    elif action == "delete":
+    elif action == DeleteMessageAction().action:
         delete_message(peer_id, packet.message.message_id)
         for index in range(messages_list.count()):
             message_item: MessageItemWidget = messages_list.item(index)
             if message_item.message.message_id == packet.message.message_id:
                 messages_list.takeItem(messages_list.row(message_item))
                 break
-    elif action == "edit":
+    elif action == EditMessageAction().action:
         edit_message(peer_id, packet.message)
         for index in range(messages_list.count()):
             message_item: MessageItemWidget = messages_list.item(index)
@@ -141,7 +175,7 @@ def new_message_callback(packet: Packet, peer: Peer, window):
                 messages_list.takeItem(row)
                 messages_list.insertItem(row, MessageItemWidget(packet.message))
                 break
-    elif action == "info":
+    elif action == PeerInfoAction().action:
         nickname = packet.data.content["nickname"]
         port = packet.data.content["port"]
         update_dialog_info(nickname, port, peer_id)
@@ -160,10 +194,13 @@ def new_message_callback(packet: Packet, peer: Peer, window):
                     "request": False
                 })
             ))
-    elif action == "service":
+    elif action == ServiceAction().action:
         messages_list.addItem(MessageItemWidget(packet.message, True))
         messages_list.scrollToBottom()
         save_message(peer_id, packet.message, True)
+    elif action == DisconnectAction().action:
+        pass
+        # TODO peer has disconnected
 
 
 def invalid_message_callback(reason, message, peer):
@@ -176,9 +213,16 @@ def invalid_message_callback(reason, message, peer):
     client_base.invalid_message_callback = invalid_message_callback
 
 
-def delete_dialog_callback(peer_id):
+def delete_dialog_callback(peer_id: str, host: str, port: int):
+    client_base.send_message(
+        peer_id,
+        Packet(
+            action=DisconnectAction(),
+            message=Message()
+        )
+    )
     delete_dialog(peer_id)
-    client_base.disconnect(Peer("", 0, peer_id))
+    client_base.disconnect(Peer(host, port, peer_id))
 
 
 def delete_message_item_selected_callback(messages_list, message):

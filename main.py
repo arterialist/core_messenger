@@ -211,22 +211,24 @@ class DialogsListRootWidget(QFrame):
         # this is necessary!
         # noinspection PyAttributeOutsideInit
         self.menu = QMenu(self)
-        peer_id = self.dialogs_list.currentItem().peer_id
+        item = self.dialogs_list.currentItem()
+        if item:
+            peer_id = item.peer_id
 
-        close_action = QAction('Disconnect', self)
-        close_action.triggered.connect(lambda: self.remove_dialog(self.dialogs_list.currentItem()))
+            close_action = QAction('Disconnect', self)
+            close_action.triggered.connect(lambda: self.remove_dialog(item))
 
-        share_info_action = QAction('Share Your Info', self)
-        share_info_action.triggered.connect(lambda: self.share_info(peer_id))
+            share_info_action = QAction('Share Your Info', self)
+            share_info_action.triggered.connect(lambda: self.share_info(peer_id))
 
-        request_info_action = QAction('Request Peer Info', self)
-        request_info_action.triggered.connect(lambda: self.request_info(peer_id))
+            request_info_action = QAction('Request Peer Info', self)
+            request_info_action.triggered.connect(lambda: self.request_info(peer_id))
 
-        self.menu.addAction(share_info_action)
-        self.menu.addAction(request_info_action)
-        self.menu.addAction(close_action)
-        # add other required actions
-        self.menu.popup(QCursor.pos())
+            self.menu.addAction(share_info_action)
+            self.menu.addAction(request_info_action)
+            self.menu.addAction(close_action)
+            # add other required actions
+            self.menu.popup(QCursor.pos())
 
     def incoming_context_menu_event(self, event):
         item = self.incoming_list.currentItem()
@@ -248,7 +250,7 @@ class DialogsListRootWidget(QFrame):
 
     def remove_dialog(self, dialog):
         if dialog:
-            delete_dialog_callback(dialog.peer_id)
+            delete_dialog_callback(dialog.peer_id, dialog.host, dialog.port)
             self.dialogs_list.takeItem(self.dialogs_list.row(dialog))
 
     @staticmethod
