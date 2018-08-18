@@ -19,7 +19,7 @@ class DialogsListHeadWidget(QWidget):
         layout = QHBoxLayout(self)
 
         dialogs_label = QLabel(self)
-        dialogs_label.setText("Create dialog")
+        dialogs_label.setText("Connect to:")
         dialogs_label.setFixedHeight(30)
 
         self.new_dialog_button.setFixedHeight(30)

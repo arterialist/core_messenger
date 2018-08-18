@@ -1,4 +1,5 @@
 import copy
+from time import sleep
 from typing import Optional
 
 from PyQt5.QtGui import QColor
@@ -201,6 +202,21 @@ def new_message_callback(packet: Packet, peer: Peer, window):
     elif action == DisconnectAction().action:
         pass
         # TODO peer has disconnected
+    elif action == ConnectAction().action:
+        # pretend that we are server
+        client_base.send_message(
+            peer_id,
+            Packet(
+                action=ServiceAction(),
+                message=Message(text="Wrong button, buddy :)")
+            )
+        )
+        client_base.peers[peer_id]["socket"].close()
+        client_base.peers.pop(peer_id)
+        sleep(0.5)
+        dialogs_list = window.centralWidget().dialogs_list_frame.dialogs_list
+        dialogs_list.takeItem(dialogs_list.row(dialogs_list.currentItem()))
+        delete_dialog(peer_id)
 
 
 def invalid_message_callback(reason, message, peer):
