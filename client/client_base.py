@@ -67,8 +67,8 @@ def p2p_new_message_listener(peer: Client, connection: socket):
                 peer_disconnected_callback()
             if peer.peer_id in peers.keys():
                 peers.pop(peer.peer_id)
-            if (peer.ip, peer.port) in sockets.keys():
-                sockets.pop((peer.ip, peer.port))
+            if (peer.host, peer.port) in sockets.keys():
+                sockets.pop((peer.host, peer.port))
             break
         try:
             recv_msg = layers.socket_handle_received(connection, data.decode('utf8'), loaded_modules)
@@ -99,8 +99,8 @@ def server_new_message_listener(peer: Server, connection: socket):
                 peer_disconnected_callback()
             if peer.peer_id in peers.keys():
                 peers.pop(peer.peer_id)
-            if (peer.ip, peer.port) in sockets.keys():
-                sockets.pop((peer.ip, peer.port))
+            if (peer.host, peer.port) in sockets.keys():
+                sockets.pop((peer.host, peer.port))
             break
         try:
             recv_msg = layers.socket_handle_received(connection, data.decode('utf8'), loaded_modules)
@@ -145,7 +145,7 @@ def socket_listen_on():
     incoming_connection_thread.start()
 
 
-def p2p_connect(remote_host: str, remote_port: int) -> tuple:
+def p2p_connect(remote_host: str, remote_port: int, peer_id_override: str = None) -> tuple:
     if len(peers.keys()) == 1024:
         return "Reached maximum connections limit", None
 
@@ -171,6 +171,10 @@ def p2p_connect(remote_host: str, remote_port: int) -> tuple:
         }
 
     peer = Client(remote_host, remote_port)
+
+    if peer_id_override:
+        peer.peer_id = peer_id_override
+
     incoming_message_thread = threading.Thread(target=p2p_new_message_listener, args=[peer, connection])
     incoming_message_thread.setDaemon(True)
 
@@ -185,7 +189,7 @@ def p2p_connect(remote_host: str, remote_port: int) -> tuple:
     return None, peer
 
 
-def server_connect(remote_host: str, remote_port: int) -> tuple:
+def server_connect(remote_host: str, remote_port: int, peer_id_override: str = None) -> tuple:
     if len(peers.keys()) == 1024:
         return "Reached maximum connections limit", None
 
@@ -210,8 +214,11 @@ def server_connect(remote_host: str, remote_port: int) -> tuple:
             "used": True
         }
 
-    connection.settimeout(30)
     peer = Server(remote_host, remote_port)
+
+    if peer_id_override:
+        peer.peer_id = peer_id_override
+
     incoming_message_thread = threading.Thread(target=server_new_message_listener, args=[peer, connection])
     incoming_message_thread.setDaemon(True)
 
@@ -276,8 +283,8 @@ def disconnect(peer: Peer):
             peers.pop(peer.peer_id)
         except KeyError:
             pass
-    if (peer.ip, peer.port) in sockets.keys():
-        sockets[(peer.ip, peer.port)]["used"] = False
+    if (peer.host, peer.port) in sockets.keys():
+        sockets[(peer.host, peer.port)]["used"] = False
 
 
 def finish():
