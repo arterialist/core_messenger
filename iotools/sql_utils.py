@@ -1,4 +1,3 @@
-from client import client_base
 from client.models.messages import Message
 from iotools.sql_base import SQLManager, ColumnTypes, DB_MESSAGING, DB_SETTINGS, DB_STORAGE, Query
 from models.storage import Settings, Storage, Category, Setting
@@ -103,7 +102,6 @@ def create_dialog(host: str, port: str, chat_type: int, peer_id: str):
         ["host", "port", "chat_type", "peer_id", "nickname", "listening_port"],
         [host, port, chat_type, peer_id, "", ""])
     create_messages_table_for_dialog(peer_id)
-    client_base.current_peer_id = peer_id
 
 
 def update_dialog(host: str, port: int, chat_type: int, peer_id: str):

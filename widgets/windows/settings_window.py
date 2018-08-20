@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPalette, QColor, QFont
 from PyQt5.QtWidgets import QWidget, QMainWindow, QListWidget, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QSizePolicy, QCheckBox, QLineEdit, \
-    QAbstractItemView, QScrollArea
+    QAbstractItemView, QScrollArea, QListWidgetItem
 
 import color_palette
 from iotools.storage import AppStorage
@@ -47,7 +47,9 @@ class SettingsRootWidget(QWidget):
         first_settings = settings.get_settings(settings.get_categories()[0])
         self.current_category = settings.get_categories()[0]
         for category in settings.get_categories():
-            self.categories_list.addItem(category.display_name)
+            item = QListWidgetItem(category.display_name)
+            item.setForeground(QColor("#DDD"))
+            self.categories_list.addItem(item)
 
         self.settings_container = SettingsContainerWidget(first_settings)
         self.settings_container.setFixedWidth(400)
@@ -85,7 +87,9 @@ class SettingItemWidget(QWidget):
     def init_ui(self):
         self.setFixedHeight(90)
         self.title.setText(self.setting.display_name)
-        self.title.setFont(QFont("Times", weight=QFont.Bold))
+        font = QFont()
+        font.setBold(True)
+        self.title.setFont(font)
 
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignTop)
@@ -121,6 +125,7 @@ class SettingsItemValueWidget(QWidget):
             self.editable.setText(self.value)
             layout.addWidget(self.editable)
 
+        layout.setContentsMargins(0, 0, 0, 0)
         return layout
 
     def get_value(self):

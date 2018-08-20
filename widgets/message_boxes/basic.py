@@ -19,3 +19,14 @@ class CheckboxMessageBox(QMessageBox):
 
     def exec_(self, *args, **kwargs):
         return QMessageBox.exec_(self), self.checkbox.isChecked()
+
+
+class ConfirmationMessageBox(QMessageBox):
+    def __init__(self, question: str = "Are you sure?"):
+        super(ConfirmationMessageBox, self).__init__()
+        self.init_ui(question)
+
+    def init_ui(self, question: str):
+        self.setWindowTitle("Confirm action")
+        self.setText(question)
+        self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)

@@ -49,7 +49,7 @@ def new_dialog_click_callback(widget):
     error, peer = client_base.p2p_connect(address[0], address[1])
 
     if peer:
-        dialog = DialogItemWidget("", peer.ip, peer.port, 0, peer_id=peer.peer_id)
+        dialog = DialogItemWidget("", peer.host, peer.port, 0, peer_id=peer.peer_id)
         create_dialog(address[0], address[1], 0, peer.peer_id)
         dialogs_list = widget.parentWidget().dialogs_list
         dialogs_list.addItem(dialog)
@@ -73,7 +73,7 @@ def new_chat_click_callback(widget):
     error, peer = client_base.server_connect(address[0], address[1])
 
     if peer:
-        dialog = DialogItemWidget("", peer.ip, peer.port, 2, peer_id=peer.peer_id)
+        dialog = DialogItemWidget("", peer.host, peer.port, 2, peer_id=peer.peer_id)
         create_dialog(address[0], address[1], 2, peer.peer_id)
         dialogs_list = widget.parentWidget().dialogs_list
         dialogs_list.addItem(dialog)
@@ -203,6 +203,8 @@ def new_message_callback(packet: Packet, peer: Peer, window):
         pass
         # TODO peer has disconnected
     elif action == ConnectAction().action:
+        if packet.data:  # indicates that it's just reconnect
+            return
         # pretend that we are server
         client_base.send_message(
             peer_id,
@@ -223,7 +225,7 @@ def invalid_message_callback(reason, message, peer):
     client_base.invalid_message_callback = None
     alert_box = QMessageBox()
     alert_box.setWindowTitle("Invalid message received")
-    alert_box.setText("Reason:\n{}\nFrom:{}:{}\n\nMessage:\n{}".format(reason, peer.ip, peer.port, message))
+    alert_box.setText("Reason:\n{}\nFrom:{}:{}\n\nMessage:\n{}".format(reason, peer.host, peer.port, message))
     alert_box.setStandardButtons(QMessageBox.Ok)
     alert_box.exec_()
     client_base.invalid_message_callback = invalid_message_callback

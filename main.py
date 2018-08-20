@@ -11,12 +11,13 @@ from callback.callbacks import *
 from client import client_base
 from client.models.messages import Data
 from iotools.sql_base import SQLManager, DB_MESSAGING
-from iotools.sql_utils import init_databases, save_databases
+from iotools.sql_utils import init_databases, save_databases, delete_messages_table_for_dialog, create_messages_table_for_dialog
 from iotools.storage import AppStorage
 from models.logging import Logger
 from models.storage import Category
 from tools import full_strip
 from widgets.dialogs.dialogs_head import DialogsListHeadWidget
+from widgets.message_boxes.basic import ConfirmationMessageBox
 from widgets.messages.message_input import MessageInputWidget
 from widgets.windows.settings_window import SettingsWindow
 
@@ -211,12 +212,9 @@ class DialogsListRootWidget(QFrame):
         # this is necessary!
         # noinspection PyAttributeOutsideInit
         self.menu = QMenu(self)
-        item = self.dialogs_list.currentItem()
+        item: DialogItemWidget = self.dialogs_list.currentItem()
         if item:
             peer_id = item.peer_id
-
-            close_action = QAction('Disconnect', self)
-            close_action.triggered.connect(lambda: self.remove_dialog(item))
 
             share_info_action = QAction('Share Your Info', self)
             share_info_action.triggered.connect(lambda: self.share_info(peer_id))
@@ -224,9 +222,25 @@ class DialogsListRootWidget(QFrame):
             request_info_action = QAction('Request Peer Info', self)
             request_info_action.triggered.connect(lambda: self.request_info(peer_id))
 
+            clear_history_action = QAction('Clear History', self)
+            clear_history_action.triggered.connect(lambda: self.clear_history(peer_id))
+
+            delete_dialog_action = QAction('Delete Dialog', self)
+            delete_dialog_action.triggered.connect(lambda: self.delete_dialog(item))
+
             self.menu.addAction(share_info_action)
             self.menu.addAction(request_info_action)
-            self.menu.addAction(close_action)
+            self.menu.addAction(clear_history_action)
+            self.menu.addAction(delete_dialog_action)
+
+            if peer_id in client_base.peers.keys():
+                disconnect_action = QAction('Disconnect', self)
+                disconnect_action.triggered.connect(lambda: self.disconnect_from_peer(item))
+                self.menu.addAction(disconnect_action)
+            else:
+                reconnect_action = QAction('Reconnect', self)
+                reconnect_action.triggered.connect(lambda: self.reconnect_to_peer(item))
+                self.menu.addAction(reconnect_action)
             # add other required actions
             self.menu.popup(QCursor.pos())
 
@@ -248,10 +262,51 @@ class DialogsListRootWidget(QFrame):
             self.menu.addAction(decline_action)
             self.menu.popup(QCursor.pos())
 
-    def remove_dialog(self, dialog):
-        if dialog:
+    @staticmethod
+    def disconnect_from_peer(dialog):
+        client_base.send_message(
+            dialog.peer_id,
+            Packet(
+                action=DisconnectAction(),
+                message=Message()
+            )
+        )
+        client_base.disconnect(Peer(dialog.host, dialog.port, dialog.peer_id))
+
+    @staticmethod
+    def reconnect_to_peer(dialog):
+        if dialog.chat_type == 0:
+            client_base.p2p_connect(dialog.host, dialog.port, peer_id_override=dialog.peer_id)
+            client_base.send_message(
+                dialog.peer_id,
+                Packet(
+                    action=ConnectAction(),
+                    message=Message(),
+                    data=Data()
+                )
+            )
+        else:
+            client_base.p2p_connect(dialog.host, dialog.port, peer_id_override=dialog.peer_id)
+            client_base.send_message(
+                dialog.peer_id,
+                Packet(
+                    action=ConnectAction(),
+                    message=Message()
+                )
+            )
+
+    def delete_dialog(self, dialog):
+        result = ConfirmationMessageBox("Delete dialog? This cannot be undone.").exec_()
+        if result == QMessageBox.Yes:
             delete_dialog_callback(dialog.peer_id, dialog.host, dialog.port)
             self.dialogs_list.takeItem(self.dialogs_list.row(dialog))
+
+    def clear_history(self, peer_id):
+        result = ConfirmationMessageBox("Clear history? This cannot be undone.").exec_()
+        if result == QMessageBox.Yes:
+            self.parentWidget().parentWidget().opened_dialog_frame.messages_list.clear()
+            delete_messages_table_for_dialog(peer_id)
+            create_messages_table_for_dialog(peer_id)
 
     @staticmethod
     def send_info(peer_id: str, request: bool = False):
