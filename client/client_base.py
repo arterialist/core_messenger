@@ -8,9 +8,14 @@ from client.models.actions import ConnectAction
 from client.models.messages import Message
 from client.models.packets import Packet
 from client.models.peers import Client, Server, Peer
-from client.modules.default_modules import SendAsJSONModule, Base64EncodeModule
+from client.modules.default_modules import SendAsJSONModule, Base64EncodeModule, Base64SendModule, AES256SendModule
+from client.modules.module import STATUS_OK
 
-loaded_modules = [SendAsJSONModule(), Base64EncodeModule()]
+loaded_modules = {
+    "transformer": SendAsJSONModule(),
+    "model": [Base64EncodeModule()],
+    "binary": [Base64SendModule(), AES256SendModule("yoursecretkey123", enabled=False)]
+}
 
 nickname = None
 local_port = None
@@ -71,8 +76,9 @@ def p2p_new_message_listener(peer: Client, connection: socket):
                 sockets.pop((peer.host, peer.port))
             break
         try:
-            recv_msg = layers.socket_handle_received(connection, data.decode('utf8'), loaded_modules)
-            if new_message_callback:
+            recv_msg, status_code = layers.socket_handle_received(connection, data, loaded_modules,
+                                                                  lambda m, e: print(f"Error in module {m.__class__.__name__} on receive:\n{e}"))
+            if new_message_callback and status_code == STATUS_OK:
                 new_message_callback(recv_msg, peer)
         except UnicodeDecodeError:
             reason = "Corrupted message"
@@ -103,8 +109,9 @@ def server_new_message_listener(peer: Server, connection: socket):
                 sockets.pop((peer.host, peer.port))
             break
         try:
-            recv_msg = layers.socket_handle_received(connection, data.decode('utf8'), loaded_modules)
-            if new_message_callback:
+            recv_msg, status_code = layers.socket_handle_received(connection, data.decode('utf8'), loaded_modules,
+                                                                  lambda m, e: print(f"Error in module {m.__class__.__name__} on receive:\n{e}"))
+            if new_message_callback and status_code == STATUS_OK:
                 new_message_callback(recv_msg, peer)
         except UnicodeDecodeError:
             reason = "Corrupted message"
@@ -273,7 +280,8 @@ def decline_connection(address):
 def send_message(peer_id, message):
     if peer_id in peers.keys():
         # pass your modules here
-        layers.socket_send_data(peers.get(peer_id).get("socket"), message, loaded_modules)
+        layers.socket_send_data(peers.get(peer_id).get("socket"), message, loaded_modules,
+                                lambda m, e: print(f"Error in module {m.__class__.__name__} on send:\n{e}"))
 
 
 def disconnect(peer: Peer):
