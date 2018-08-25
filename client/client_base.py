@@ -60,9 +60,10 @@ def incoming_connections_listener():
 
 # noinspection PyCallingNonCallable
 def p2p_new_message_listener(peer: Client, connection: socket):
+    next_data_len = 8
     while peer.peer_id in peers.keys():
         try:
-            data = connection.recv(4096)
+            data = connection.recv(next_data_len)
         except OSError:
             continue
         reason = None
@@ -75,6 +76,20 @@ def p2p_new_message_listener(peer: Client, connection: socket):
             if (peer.host, peer.port) in sockets.keys():
                 sockets.pop((peer.host, peer.port))
             break
+
+        decoded_data: str = data.decode("utf8")
+        if len(data) == 8 and len(decoded_data) == 8 and decoded_data.startswith(chr(64)) and decoded_data.endswith(chr(64)):
+            def is_number(string: str):
+                for char in string:
+                    if ord(char) not in range(48, 58):
+                        return False
+                return True
+
+            if is_number(decoded_data[1:7]):
+                next_data_len = int(decoded_data[1:7])
+                continue
+        next_data_len = 8
+
         try:
             recv_msg, status_code = layers.socket_handle_received(connection, data, loaded_modules,
                                                                   lambda m, e: print(f"Error in module {m.__class__.__name__} on receive:\n{e}"))
@@ -88,14 +103,15 @@ def p2p_new_message_listener(peer: Client, connection: socket):
             reason = "Invalid JSON schema"
         finally:
             if reason and invalid_message_callback:
-                invalid_message_callback(reason, data.decode("utf8"), peer)
+                invalid_message_callback(reason, decoded_data, peer)
 
 
 # noinspection PyCallingNonCallable
 def server_new_message_listener(peer: Server, connection: socket):
+    next_data_len = 8
     while peer.peer_id in peers.keys():
         try:
-            data = connection.recv(4096)
+            data = connection.recv(next_data_len)
         except OSError:
             continue
         reason = None
@@ -108,8 +124,22 @@ def server_new_message_listener(peer: Server, connection: socket):
             if (peer.host, peer.port) in sockets.keys():
                 sockets.pop((peer.host, peer.port))
             break
+
+        decoded_data: str = data.decode("utf8")
+        if len(data) == 8 and len(decoded_data) == 8 and decoded_data.startswith(chr(64)) and decoded_data.endswith(chr(64)):
+            def is_number(string: str):
+                for char in string:
+                    if ord(char) not in range(48, 58):
+                        return False
+                return True
+
+            if is_number(decoded_data[1:7]):
+                next_data_len = int(decoded_data[1:7])
+                continue
+        next_data_len = 8
+
         try:
-            recv_msg, status_code = layers.socket_handle_received(connection, data.decode('utf8'), loaded_modules,
+            recv_msg, status_code = layers.socket_handle_received(connection, data, loaded_modules,
                                                                   lambda m, e: print(f"Error in module {m.__class__.__name__} on receive:\n{e}"))
             if new_message_callback and status_code == STATUS_OK:
                 new_message_callback(recv_msg, peer)
@@ -121,7 +151,7 @@ def server_new_message_listener(peer: Server, connection: socket):
             reason = "Invalid JSON schema"
         finally:
             if reason and invalid_message_callback:
-                invalid_message_callback(reason, data.decode("utf8"), peer)
+                invalid_message_callback(reason, decoded_data, peer)
 
 
 def socket_listen_off():

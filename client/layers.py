@@ -39,6 +39,10 @@ def socket_send_data(to, what: Jsonable, modules: dict, error_callback=None):
             return what, status_code
 
     if to:
+        data_length = len(what_copy)
+        if data_length > pow(2, 16):
+            return what, STATUS_DROP
+        to.sendall(bytes(f"{chr(64)}{str(data_length).zfill(6)}{chr(64)}", "utf8"))  # data length packet
         to.sendall(what_copy)
 
 
