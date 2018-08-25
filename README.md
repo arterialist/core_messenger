@@ -15,15 +15,15 @@ Core messenger is yet another P2P messenger with optional [servers](https://gith
 
 **Q: Where are my prebuilt binaries for Windows, Linux and MacOS?**
 
-A: This product is currently very unstable, untested (_testers needed_), and actively developed, so I see no reason to build new binaries each and every feature/commit/fix/etc. as for now. In the future, when this project will reach alpha state, I will setup automatic build and deploy to _Releases_ section.
+A: This product is now very unstable, untested (_testers needed_), and actively developed, so I see no reason to build new binaries each and every feature/commit/fix/etc. as for now. In the future, when this project will reach alpha state, I will setup automatic build and deploy to _Releases_ section.
 
 **Q: Why are you using self-made protocol, library etc.?**
 
-A: I'm a programmer (obviously), and I truly enjoy programming when I really create something new from ground up. Also making my own protocol/library helps me to learn a lot about many different things, which is true pleasure. I could use such things as libp2p and MTProto, but what's the point of making basically another GUI for existing and widely used tools?
+A: I'm a programmer (obviously), and I truly enjoy programming when I really create something new from ground up. Also making my own protocol/library helps me to learn a lot about different things, which is true pleasure. I could use such things as libp2p and MTProto, but what's the point of making basically another GUI for existing and widely used tools?
 
 **Q: Is it safe? Do you have any encryption implemented or at least in plans?**
 
-A: I have AES256 encryption at packet level implemented, as per [this commit](https://github.com/arterialist/core_client/commit/f18691c7e68f029123cc783e2cf68a242e7afba5), but as you can see it from the commit message, it's experimental. My main goal currently is to build flexible and powerful plugin system, so anyone with some python coding skills can create it's own plugin. Is it safe? Well, you can enable AES256 plugin and change secret key (don't forget to tell it to opponent), and your messaging will be safe. Again, more security coming soon (encrypted database too).
+A: I have AES256 encryption at packet level implemented, as per [this commit](https://github.com/arterialist/core_client/commit/f18691c7e68f029123cc783e2cf68a242e7afba5), but as you can see it from the commit message, it's experimental. My main goal now is to build flexible and powerful plugin system, so anyone with some python coding skills can create its own plugin. Is it safe? Well, you can enable AES256 plugin and change secret key (don't forget to tell it to opponent), and your messaging will be safe. Again, more security coming soon (encrypted database too).
 
 ## Requirements and Installation
 
