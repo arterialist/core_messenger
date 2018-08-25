@@ -26,8 +26,9 @@ class SendAsJSONModule(BaseModule):
 
 
 class Base64EncodeModule(BasePreModule):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, enabled: bool = True):
+        super().__init__(enabled)
+        self.enabled = enabled
 
     @processing_method
     def on_receive(self, data, sock):
@@ -45,8 +46,9 @@ class Base64EncodeModule(BasePreModule):
 
 
 class Base64SendModule(BasePostModule):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, enabled: bool = True):
+        super().__init__(enabled)
+        self.enabled = enabled
 
     @processing_method
     def on_receive(self, data, sock):
@@ -63,7 +65,7 @@ class Base64SendModule(BasePostModule):
 
 class AES256SendModule(BasePostModule):
     def __init__(self, secret: str, enabled=True):
-        super().__init__()
+        super().__init__(enabled)
         self.secret = secret
         self.enabled = enabled
 
