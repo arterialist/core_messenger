@@ -2,9 +2,9 @@ import platform
 import sys
 
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QIcon, QPalette, QCursor, QCloseEvent
+from PyQt5.QtGui import QIcon, QPalette, QCursor, QCloseEvent, QKeySequence
 from PyQt5.QtWidgets import QApplication, QAction, qApp, QMainWindow, QHBoxLayout, QFrame, QSplitter, QVBoxLayout, QAbstractItemView, QMenu, \
-    QTabWidget
+    QTabWidget, QShortcut
 
 import color_palette
 from callback.callbacks import *
@@ -28,6 +28,7 @@ general_log = Logger.get_channel("GENERAL", True)
 init_databases()
 
 
+# noinspection PyUnresolvedReferences
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -149,7 +150,7 @@ class RootWidget(QWidget):
         self.setLayout(layout)
 
 
-# noinspection PyAttributeOutsideInit
+# noinspection PyAttributeOutsideInit,PyUnresolvedReferences
 class DialogsListRootWidget(QFrame):
     def __init__(self):
         super().__init__()
@@ -161,6 +162,35 @@ class DialogsListRootWidget(QFrame):
 
     def init_ui(self):
         layout = QVBoxLayout()
+
+        # shortcuts setup
+        close_dialog_shortcut = QShortcut(QKeySequence("Esc"), self)
+        close_dialog_shortcut.activated.connect(lambda: self.close_dialog_event())
+        close_dialog_shortcut.setEnabled(True)
+
+        dialog_up_shortcut = QShortcut(QKeySequence("Alt+Up"), self)
+        dialog_up_shortcut.activated.connect(lambda: self.open_dialog_above())
+        dialog_up_shortcut.setEnabled(True)
+
+        dialog_down_shortcut = QShortcut(QKeySequence("Alt+Down"), self)
+        dialog_down_shortcut.activated.connect(lambda: self.open_dialog_below())
+        dialog_down_shortcut.setEnabled(True)
+
+        open_dialogs_shortcut = QShortcut(QKeySequence("Ctrl+Alt+D"), self)
+        open_dialogs_shortcut.activated.connect(lambda: self.tabs.setCurrentIndex(0))
+        open_dialogs_shortcut.setEnabled(True)
+
+        open_incoming_shortcut = QShortcut(QKeySequence("Ctrl+Alt+I"), self)
+        open_incoming_shortcut.activated.connect(lambda: self.tabs.setCurrentIndex(1))
+        open_incoming_shortcut.setEnabled(True)
+
+        accept_connection_shortcut = QShortcut(QKeySequence("Ctrl+Shift+A"), self)
+        accept_connection_shortcut.activated.connect(lambda: self.accept_connection_event(self.incoming_list.currentItem()))
+        accept_connection_shortcut.setEnabled(True)
+
+        decline_connection_shortcut = QShortcut(QKeySequence("Ctrl+Shift+D"), self)
+        decline_connection_shortcut.activated.connect(lambda: self.decline_connection_event(self.incoming_list.currentItem()))
+        decline_connection_shortcut.setEnabled(True)
 
         # dialogs list setup
         p = self.dialogs_list.palette()
@@ -208,7 +238,22 @@ class DialogsListRootWidget(QFrame):
 
         self.setLayout(layout)
 
-    def dialog_context_menu_event(self, event):
+    def close_dialog_event(self):
+        dialog_item_changed_callback(None, main_window)
+        if self.dialogs_list.currentItem():
+            self.dialogs_list.currentItem().setSelected(False)
+
+    def open_dialog_above(self):
+        current = self.dialogs_list.currentRow()
+        if current:
+            self.dialogs_list.setCurrentRow(current - 1)
+
+    def open_dialog_below(self):
+        current = self.dialogs_list.currentRow()
+        if current < self.dialogs_list.count() - 1:
+            self.dialogs_list.setCurrentRow(current + 1)
+
+    def dialog_context_menu_event(self, _):
         # this is necessary!
         # noinspection PyAttributeOutsideInit
         self.menu = QMenu(self)
@@ -244,23 +289,29 @@ class DialogsListRootWidget(QFrame):
             # add other required actions
             self.menu.popup(QCursor.pos())
 
-    def incoming_context_menu_event(self, event):
+    def incoming_context_menu_event(self, _):
         item = self.incoming_list.currentItem()
         if item:
             # noinspection PyAttributeOutsideInit
             self.menu = QMenu(self)
 
-            address = (item.text().split(":")[0], int(item.text().split(":")[1]))
-
             accept_action = QAction("Accept", self)
-            accept_action.triggered.connect(lambda: accept_incoming_connection(self, address))
+            accept_action.triggered.connect(lambda: self.accept_connection_event(item))
 
             decline_action = QAction("Decline", self)
-            decline_action.triggered.connect(lambda: decline_incoming_connection(self, address))
+            decline_action.triggered.connect(lambda: self.decline_connection_event(item))
 
             self.menu.addAction(accept_action)
             self.menu.addAction(decline_action)
             self.menu.popup(QCursor.pos())
+
+    def accept_connection_event(self, item):
+        address = (item.text().split(":")[0], int(item.text().split(":")[1]))
+        accept_incoming_connection(self, address)
+
+    def decline_connection_event(self, item):
+        address = (item.text().split(":")[0], int(item.text().split(":")[1]))
+        decline_incoming_connection(self, address)
 
     @staticmethod
     def disconnect_from_peer(dialog):
@@ -320,6 +371,7 @@ class DialogsListRootWidget(QFrame):
         self.send_info(peer_id, True)
 
 
+# noinspection PyUnresolvedReferences
 class OpenedDialogWidget(QFrame):
     def __init__(self):
         super().__init__()
@@ -334,7 +386,7 @@ class OpenedDialogWidget(QFrame):
         p = self.messages_list.palette()
         p.setColor(QPalette.Base, QColor(color_palette.primary_dark))
         self.messages_list.setPalette(p)
-        self.messages_list.setSpacing(5)
+        self.messages_list.setSpacing(1)
         self.messages_list.showMinimized()
         self.messages_list.setWordWrap(True)
 
@@ -354,7 +406,7 @@ class OpenedDialogWidget(QFrame):
 
         self.setLayout(layout)
 
-    def message_context_menu_event(self, event):
+    def message_context_menu_event(self, _):
         message_item: MessageItemWidget = self.messages_list.currentItem()
         # same thing
         # noinspection PyAttributeOutsideInit
