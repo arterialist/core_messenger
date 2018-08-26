@@ -32,6 +32,10 @@ A: I have AES256 encryption at packet level implemented, as per [this commit](ht
 - python 3.6 or above
 - Qt5 installed in the system (usually you don't need to care about this)
 
+### Depends on
+
+- PyQt5
+
 ### Installation
 
 - `git clone https://github.com/arterialist/core_messenger.git`
