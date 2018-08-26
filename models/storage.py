@@ -63,11 +63,12 @@ class Settings:
             if setting.key == key:
                 return setting
 
-    def is_new(self, category: Category, setting: Setting) -> bool:
+    def is_new(self, possibly_new_category: Category, setting: Setting) -> bool:
+        category = Categories.get_category(possibly_new_category.name, possibly_new_category.display_name)
         return setting in self.__new_settings.get(category, list())
 
     def iterate(self) -> tuple:
-        for category, settings in self.__settings.items():
+        for category, settings in list(self.__settings.items()) + list(self.__new_settings.items()):
             for setting in settings:
                 yield category, setting
 

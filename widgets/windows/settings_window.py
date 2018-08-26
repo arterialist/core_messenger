@@ -85,7 +85,7 @@ class SettingItemWidget(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        self.setFixedHeight(90)
+        self.setFixedHeight(50)
         self.title.setText(self.setting.display_name)
         font = QFont()
         font.setBold(True)
@@ -95,6 +95,7 @@ class SettingItemWidget(QWidget):
         layout.setAlignment(Qt.AlignTop)
         layout.addWidget(self.title)
         layout.addWidget(self.value)
+        layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
     def get_setting(self):
