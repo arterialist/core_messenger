@@ -34,7 +34,7 @@ class MessageInputWidget(QFrame):
         shortcut = QShortcut(QKeySequence("Ctrl+Return"), self.send_button)
         shortcut.activated.connect(lambda: self.send_button_clicked(True))
         shortcut.setEnabled(True)
-        self.send_button.clicked.connect(lambda: self.send_button_clicked())
+        self.send_button.clicked.connect(lambda: self.send_button_clicked(True))
         if platform.system() != "Linux":
             self.send_button.setStyleSheet("""
                     QPushButton {
