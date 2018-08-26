@@ -286,14 +286,7 @@ class DialogsListRootWidget(QFrame):
                 )
             )
         else:
-            client_base.p2p_connect(dialog.host, dialog.port, peer_id_override=dialog.peer_id)
-            client_base.send_message(
-                dialog.peer_id,
-                Packet(
-                    action=ConnectAction(),
-                    message=Message()
-                )
-            )
+            client_base.server_connect(dialog.host, dialog.port, peer_id_override=dialog.peer_id)
 
     def delete_dialog(self, dialog):
         result = ConfirmationMessageBox("Delete dialog? This cannot be undone.").exec_()

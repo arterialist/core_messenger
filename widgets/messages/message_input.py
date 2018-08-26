@@ -5,6 +5,8 @@ from PyQt5.QtWidgets import QPushButton, QTextEdit, QFrame, QHBoxLayout, QShortc
 
 import color_palette
 from callback.callbacks import send_button_clicked_callback
+from iotools.storage import AppStorage
+from models.storage import Category
 
 
 class MessageInputWidget(QFrame):
@@ -30,8 +32,9 @@ class MessageInputWidget(QFrame):
         self.send_button.setPalette(p)
         self.send_button.clicked.connect(lambda: self.send_button_clicked())
         shortcut = QShortcut(QKeySequence("Ctrl+Return"), self.send_button)
-        shortcut.activated.connect(lambda: self.send_button_clicked())
+        shortcut.activated.connect(lambda: self.send_button_clicked(True))
         shortcut.setEnabled(True)
+        self.send_button.clicked.connect(lambda: self.send_button_clicked())
         if platform.system() != "Linux":
             self.send_button.setStyleSheet("""
                     QPushButton {
@@ -52,7 +55,12 @@ class MessageInputWidget(QFrame):
 
         self.setLayout(layout)
 
-    def send_button_clicked(self):
+    def send_button_clicked(self, with_ctrl=False):
+        use_ctrl = bool(int(AppStorage.get_settings().get(Category("messaging", "Messaging"), "use_ctrl_enter").value))
+
+        if use_ctrl and not with_ctrl:
+            return
+
         dialog = self.parentWidget().parentWidget().parentWidget().parentWidget().dialogs_list_frame.dialogs_list.currentItem()
         if dialog:
             current_peer_id = dialog.peer_id
