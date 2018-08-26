@@ -37,6 +37,7 @@ A: I have AES256 encryption at packet level implemented, as per [this commit](ht
 - `git clone https://github.com/arterialist/core_messenger.git`
 - `cd core_messenger`
 - `pip3 install -r requirements.txt` (or just `pip3 install pyqt5`)
+
 Done! Launch with `python3 main.py`
 
 ## Other Info
