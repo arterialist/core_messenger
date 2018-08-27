@@ -408,23 +408,24 @@ class OpenedDialogWidget(QFrame):
 
     def message_context_menu_event(self, _):
         message_item: MessageItemWidget = self.messages_list.currentItem()
-        # same thing
-        # noinspection PyAttributeOutsideInit
-        self.menu = QMenu(self)
-        reply_action = QAction('Reply', self)
-        forward_action = QAction('Forward', self)
-        delete_action = QAction('Delete', self)
-        delete_action.triggered.connect(lambda: delete_message_item_selected_callback(self.messages_list, message_item))
+        if message_item:
+            # same thing
+            # noinspection PyAttributeOutsideInit
+            self.menu = QMenu(self)
+            reply_action = QAction('Reply', self)
+            forward_action = QAction('Forward', self)
+            delete_action = QAction('Delete', self)
+            delete_action.triggered.connect(lambda: delete_message_item_selected_callback(self.messages_list, message_item))
 
-        self.menu.addAction(reply_action)
-        self.menu.addAction(forward_action)
-        if message_item.message.mine:
-            edit_action = QAction('Edit', self)
-            edit_action.triggered.connect(lambda: edit_message_item_selected_callback(self, message_item))
-            self.menu.addAction(edit_action)
-        self.menu.addAction(delete_action)
-        # add other required actions
-        self.menu.popup(QCursor.pos())
+            self.menu.addAction(reply_action)
+            self.menu.addAction(forward_action)
+            if message_item.message.mine:
+                edit_action = QAction('Edit', self)
+                edit_action.triggered.connect(lambda: edit_message_item_selected_callback(self, message_item))
+                self.menu.addAction(edit_action)
+            self.menu.addAction(delete_action)
+            # add other required actions
+            self.menu.popup(QCursor.pos())
 
 
 if __name__ == '__main__':
