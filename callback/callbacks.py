@@ -9,7 +9,7 @@ from client import client_base
 from client.models.actions import *
 from client.models.messages import Message, Data
 from client.models.packets import Packet
-from client.models.peers import Peer
+from client.models.peers import Peer, Client
 from iotools.sql_utils import delete_dialog, save_message, create_dialog, get_messages, delete_message, edit_message, update_dialog_info
 from tools import full_strip
 from widgets.dialogs.dialogs_list import DialogItemWidget
@@ -88,14 +88,16 @@ def new_chat_click_callback(widget):
         alert_box.exec_()
 
 
-def dialog_item_changed_callback(current, window):
+def dialog_item_changed_callback(current: DialogItemWidget, window):
     messages_list = window.centralWidget().opened_dialog_frame.messages_list
     messages_list.clear()
     if current:
         messages = get_messages(current.peer_id)
 
         for message in messages:
-            messages_list.addItem(MessageItemWidget(message[0], service=message[1]))
+            messages_list.addItem(
+                MessageItemWidget(message[0], message[2], message[3], service=message[1],
+                                  previous_peer_id=messages[messages.index(message) - 1][2] if messages[0] != message else None))
     messages_list.scrollToBottom()
 
 
@@ -110,8 +112,8 @@ def send_button_clicked_callback(widget, peer_id):
 
     messages_list = widget.parentWidget().parentWidget().messages_list
     message = Message(text=message_text, mine=True)
-    save_message(peer_id, message)
-    messages_list.addItem(MessageItemWidget(message))
+    save_message(peer_id, message, "", from_nickname=client_base.nickname)
+    messages_list.addItem(MessageItemWidget(message, "", client_base.nickname))
     messages_list.scrollToBottom()
     msg_copy = copy.deepcopy(message)
     msg_copy.mine = False
@@ -155,11 +157,13 @@ def new_message_callback(packet: Packet, peer: Peer, window):
 
     action = packet.action.action  # yes, I know
     peer_id = peer.peer_id
+    previous_peer_id = messages_list.currentItem().from_peer_id if messages_list.currentItem() else None
 
     if action == NewMessageAction().action:
-        messages_list.addItem(MessageItemWidget(packet.message))
+        messages_list.addItem(
+            MessageItemWidget(packet.message, peer_id, peer.nickname if type(peer) is Client else "", previous_peer_id=previous_peer_id))
         messages_list.scrollToBottom()
-        save_message(peer_id, packet.message)
+        save_message(peer_id, packet.message, peer_id, peer.nickname if type(peer) is Client else "")
     elif action == DeleteMessageAction().action:
         delete_message(peer_id, packet.message.message_id)
         for index in range(messages_list.count()):
@@ -174,7 +178,7 @@ def new_message_callback(packet: Packet, peer: Peer, window):
             if message_item.message.message_id == packet.message.message_id:
                 row = messages_list.row(message_item)
                 messages_list.takeItem(row)
-                messages_list.insertItem(row, MessageItemWidget(packet.message))
+                messages_list.insertItem(row, MessageItemWidget(packet.message, peer_id, peer.nickname if type(peer) is Client else ""))
                 break
     elif action == PeerInfoAction().action:
         nickname = packet.data.content["nickname"]
@@ -196,9 +200,9 @@ def new_message_callback(packet: Packet, peer: Peer, window):
                 })
             ))
     elif action == ServiceAction().action:
-        messages_list.addItem(MessageItemWidget(packet.message, True))
+        messages_list.addItem(MessageItemWidget(packet.message, peer.peer_id, "", True))
         messages_list.scrollToBottom()
-        save_message(peer_id, packet.message, True)
+        save_message(peer_id, packet.message, peer.peer_id, True)
     elif action == DisconnectAction().action:
         pass
         # TODO peer has disconnected
