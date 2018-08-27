@@ -10,7 +10,6 @@ Brlapi==0.6.5
 certifi==2017.4.17
 cffi==1.11.5
 chardet==3.0.4
-chrome-gnome-shell==0.0.0
 crcelk==1.1
 cryptography==2.3.1
 cupshelpers==1.0
@@ -79,14 +78,11 @@ PyYAML==3.12
 reportbug==7.1.7
 requests==2.18.1
 rsa==3.4.2
-scipy==0.19.1
 SecretStorage==2.3.1
 sip==4.19.8
 six==1.11.0
-slackclient==1.2.1
 smoke-zephyr==1.0.2
 SQLAlchemy==1.1.11
-Telethon==0.15.4.3
 termcolor==1.1.0
 termineter==0.2.7
 tzlocal==1.4
@@ -94,4 +90,3 @@ unattended-upgrades==0.1
 urllib3==1.21.1
 vboxapi==1.0
 websocket-client==0.37.0
-XlsxWriter==0.9.6
