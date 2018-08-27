@@ -1,5 +1,5 @@
 from iotools.sql_utils import get_settings_from_db, get_storage_from_db
-from models.storage import Settings
+from models.storage import Settings, Storage
 
 
 class AppStorage:
@@ -14,7 +14,7 @@ class AppStorage:
         return AppStorage.__settings
 
     @staticmethod
-    def get_storage():
+    def get_storage() -> Storage:
         if AppStorage.__storage:
             return AppStorage.__storage
         AppStorage.__storage = get_storage_from_db()
