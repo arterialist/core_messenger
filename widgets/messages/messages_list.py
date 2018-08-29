@@ -24,21 +24,28 @@ class MessageItemWidget(QWidget):
 
     def init_ui(self):
         layout = QVBoxLayout()
-
-        background_color = color_palette.primary_dark
+        background_color = color_palette.palette["blue_grey"][800]
         if self.message.mine:
             background_color = color_palette.primary
         elif self.service:
             background_color = "#80546E7A"
+
+        if not self.service:
+            self.message_text.setWordWrap(True)
         self.message_text.setText(self.message.text)
         p = self.message_text.palette()
         p.setColor(QPalette.Text, QColor("#DDDDDD") if self.service else QColor("#FFFFFF"))
         self.message_text.setPalette(p)
+        bl_radius = "10px" if self.message.mine else "10px" if self.service else "0px"
+        br_radius = "0px" if self.message.mine else "10px" if self.service else "10px"
         self.message_text.setStyleSheet(
             """
             QWidget {
                 background-color: """ + background_color + """;
-                border-radius: 10px;
+                border-top-left-radius: 10px;
+                border-top-right-radius: 10px;
+                border-bottom-left-radius: """ + bl_radius + """;
+                border-bottom-right-radius: """ + br_radius + """;
                 padding: 5px;
             }
             """
@@ -54,6 +61,7 @@ class MessageItemWidget(QWidget):
             self.name_text.setPalette(p)
             self.name_text.setFont(font)
             self.name_text.setText(text)
+            self.name_text.setContentsMargins(5, 2, 2, 2)
             layout.addWidget(self.name_text)
 
         layout.addWidget(self.message_text)
