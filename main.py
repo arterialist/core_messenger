@@ -1,7 +1,7 @@
 import platform
 import sys
 
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt, QSize, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QIcon, QPalette, QCursor, QCloseEvent, QKeySequence
 from PyQt5.QtWidgets import QApplication, QAction, qApp, QMainWindow, QHBoxLayout, QFrame, QSplitter, QVBoxLayout, QAbstractItemView, QMenu, \
     QTabWidget, QShortcut
@@ -30,9 +30,15 @@ init_databases()
 
 # noinspection PyUnresolvedReferences
 class MainWindow(QMainWindow):
+    new_message_signal = pyqtSignal(Packet, Peer)
+
+    @pyqtSlot(Packet, Peer)
+    def new_message_received_slot(self, packet: Packet, peer: Peer):
+        new_message_callback(packet, peer, main_window)
+
     def __init__(self):
         super().__init__()
-
+        self.new_message_signal.connect(self.new_message_received_slot)
         self.init_ui()
 
     def init_ui(self):
@@ -111,7 +117,7 @@ class MainWindow(QMainWindow):
         AppStorage.get_storage().set("port", port)
 
         client_base.init_socket()
-        client_base.new_message_callback = lambda message, peer: new_message_callback(message, peer, main_window)
+        client_base.new_message_callback = lambda message, peer: self.new_message_signal.emit(message, peer)
         client_base.invalid_message_callback = invalid_message_callback
 
     @staticmethod
@@ -407,8 +413,9 @@ class OpenedDialogWidget(QFrame):
         self.setLayout(layout)
 
     def message_context_menu_event(self, _):
-        message_item: MessageItemWidget = self.messages_list.currentItem()
+        message_item: QListWidgetItem = self.messages_list.currentItem()
         if message_item:
+            message_widget: MessageItemWidget = self.messages_list.itemWidget(message_item)
             # same thing
             # noinspection PyAttributeOutsideInit
             self.menu = QMenu(self)
@@ -419,9 +426,9 @@ class OpenedDialogWidget(QFrame):
 
             self.menu.addAction(reply_action)
             self.menu.addAction(forward_action)
-            if message_item.message.mine:
+            if message_widget.message.mine:
                 edit_action = QAction('Edit', self)
-                edit_action.triggered.connect(lambda: edit_message_item_selected_callback(self, message_item))
+                edit_action.triggered.connect(lambda: edit_message_item_selected_callback(self, message_widget))
                 self.menu.addAction(edit_action)
             self.menu.addAction(delete_action)
             # add other required actions

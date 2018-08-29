@@ -89,15 +89,18 @@ def new_chat_click_callback(widget):
 
 
 def dialog_item_changed_callback(current: DialogItemWidget, window):
-    messages_list = window.centralWidget().opened_dialog_frame.messages_list
+    messages_list: QListWidget = window.centralWidget().opened_dialog_frame.messages_list
     messages_list.clear()
     if current:
         messages = get_messages(current.peer_id)
 
         for message in messages:
-            messages_list.addItem(
-                MessageItemWidget(message[0], message[2], message[3], service=message[1],
-                                  previous_peer_id=messages[messages.index(message) - 1][2] if messages[0] != message else None))
+            message_item_widget = MessageItemWidget(message[0], message[2], message[3], service=message[1],
+                                                    previous_peer_id=messages[messages.index(message) - 1][2] if messages[0] != message else None)
+            item = QListWidgetItem()
+            item.setSizeHint(message_item_widget.sizeHint())
+            messages_list.addItem(item)
+            messages_list.setItemWidget(item, message_item_widget)
     messages_list.scrollToBottom()
 
 
@@ -113,7 +116,11 @@ def send_button_clicked_callback(widget, peer_id):
     messages_list = widget.parentWidget().parentWidget().messages_list
     message = Message(text=message_text, mine=True)
     save_message(peer_id, message, "", from_nickname=client_base.nickname)
-    messages_list.addItem(MessageItemWidget(message, "", client_base.nickname))
+    message_item_widget = MessageItemWidget(message, "", client_base.nickname)
+    item = QListWidgetItem()
+    item.setSizeHint(message_item_widget.sizeHint())
+    messages_list.addItem(item)
+    messages_list.setItemWidget(item, message_item_widget)
     messages_list.scrollToBottom()
     msg_copy = copy.deepcopy(message)
     msg_copy.mine = False
@@ -157,28 +164,32 @@ def new_message_callback(packet: Packet, peer: Peer, window):
 
     action = packet.action.action  # yes, I know
     peer_id = peer.peer_id
-    previous_peer_id = messages_list.currentItem().from_peer_id if messages_list.currentItem() else None
+    previous_peer_id = messages_list.itemWidget(messages_list.currentItem()).from_peer_id if messages_list.currentItem() else None
 
     if action == NewMessageAction().action:
-        messages_list.addItem(
-            MessageItemWidget(packet.message, peer_id, peer.nickname if type(peer) is Client else "", previous_peer_id=previous_peer_id))
+        message_item_widget = MessageItemWidget(packet.message, peer_id, peer.nickname if type(peer) is Client else "",
+                                                previous_peer_id=previous_peer_id)
+        item = QListWidgetItem()
+        item.setSizeHint(message_item_widget.sizeHint())
+        messages_list.addItem(item)
+        messages_list.setItemWidget(item, message_item_widget)
         messages_list.scrollToBottom()
         save_message(peer_id, packet.message, peer_id, peer.nickname if type(peer) is Client else "")
     elif action == DeleteMessageAction().action:
         delete_message(peer_id, packet.message.message_id)
         for index in range(messages_list.count()):
-            message_item: MessageItemWidget = messages_list.item(index)
-            if message_item.message.message_id == packet.message.message_id:
+            message_item = messages_list.item(index)
+            message_item_widget: MessageItemWidget = messages_list.itemWidget(message_item)
+            if message_item_widget.message.message_id == packet.message.message_id:
                 messages_list.takeItem(messages_list.row(message_item))
                 break
     elif action == EditMessageAction().action:
         edit_message(peer_id, packet.message)
         for index in range(messages_list.count()):
-            message_item: MessageItemWidget = messages_list.item(index)
-            if message_item.message.message_id == packet.message.message_id:
-                row = messages_list.row(message_item)
-                messages_list.takeItem(row)
-                messages_list.insertItem(row, MessageItemWidget(packet.message, peer_id, peer.nickname if type(peer) is Client else ""))
+            message_item = messages_list.item(index)
+            message_item_widget: MessageItemWidget = messages_list.itemWidget(message_item)
+            if message_item_widget.message.message_id == packet.message.message_id:
+                message_item_widget.init_ui()
                 break
     elif action == PeerInfoAction().action:
         nickname = packet.data.content["nickname"]
@@ -200,7 +211,11 @@ def new_message_callback(packet: Packet, peer: Peer, window):
                 })
             ))
     elif action == ServiceAction().action:
-        messages_list.addItem(MessageItemWidget(packet.message, peer.peer_id, "", True))
+        message_item_widget = MessageItemWidget(packet.message, peer.peer_id, "", True)
+        item = QListWidgetItem()
+        item.setSizeHint(message_item_widget.sizeHint())
+        messages_list.addItem(item)
+        messages_list.setItemWidget(item, message_item_widget)
         messages_list.scrollToBottom()
         save_message(peer_id, packet.message, peer.peer_id, True)
     elif action == DisconnectAction().action:
@@ -247,7 +262,7 @@ def delete_dialog_callback(peer_id: str, host: str, port: int):
     client_base.disconnect(Peer(host, port, peer_id))
 
 
-def delete_message_item_selected_callback(messages_list, message):
+def delete_message_item_selected_callback(messages_list: QListWidget, message_item):
     # that's ...
     dialogs_list = messages_list \
         .parentWidget() \
@@ -258,15 +273,16 @@ def delete_message_item_selected_callback(messages_list, message):
         .dialogs_list
     dialog: DialogItemWidget = dialogs_list.currentItem()
 
-    confirmation_dialog = DeleteMsgMessageBox(message.message.mine, dialog.nickname if len(dialog.nickname) else None)
+    message_item_widget = messages_list.itemWidget(message_item)
+    confirmation_dialog = DeleteMsgMessageBox(message_item_widget.message.mine, dialog.nickname if len(dialog.nickname) else None)
 
     result = confirmation_dialog.exec_()
 
     if result[0] == QMessageBox.Ok:
-        delete_message(dialog.peer_id, message.message.message_id)
-        messages_list.takeItem(messages_list.row(message))
+        delete_message(dialog.peer_id, message_item_widget.message.message_id)
+        messages_list.takeItem(messages_list.row(message_item))
         if result[1]:
-            delete_message_msg = Message(message_id=message.message.message_id, timestamp=0)
+            delete_message_msg = Message(message_id=message_item_widget.message.message_id, timestamp=0)
             client_base.send_message(dialog.peer_id, Packet(action=DeleteMessageAction(), message=delete_message_msg))
 
 
@@ -279,7 +295,8 @@ def edit_message_item_selected_callback(opened_dialog: QWidget, message_item: Me
     if ok and new_text != text_to_edit:
         dialog = opened_dialog.parentWidget().parentWidget().dialogs_list_frame.dialogs_list.currentItem()
         current_peer_id = dialog.peer_id
-        message_item.setText(new_text)
+        message_item.message.text = new_text
+        message_item.init_ui()
         new_message = Message(
             old_message.message_id,
             old_message.timestamp,
@@ -295,5 +312,4 @@ def edit_message_item_selected_callback(opened_dialog: QWidget, message_item: Me
         )
         client_base.send_message(current_peer_id, packet)
         message_item.message = new_message
-        message_item.setText(new_text)
         edit_message(current_peer_id, new_message)
