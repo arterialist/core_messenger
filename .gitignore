@@ -105,4 +105,6 @@ venv.bak/
 
 # project-specific
 files/storage.db
+files/settings.db
+files/messaging.db
 /.idea/
