@@ -163,8 +163,8 @@ def new_message_callback(packet: Packet, peer: Peer, window):
     messages_list: QListWidget = window.centralWidget().opened_dialog_frame.messages_list
 
     action = packet.action.action  # yes, I know
-    peer_id = peer.peer_id
-    previous_peer_id = messages_list.itemWidget(messages_list.currentItem()).from_peer_id if messages_list.currentItem() else None
+    peer_id = packet.data.content.get("from_peer") if packet.data and packet.data.content.get("from_peer", None) else peer.peer_id
+    previous_peer_id = messages_list.itemWidget(messages_list.item(messages_list.count() - 1)).from_peer_id if messages_list.count() > 0 else None
 
     if action == NewMessageAction().action:
         message_item_widget = MessageItemWidget(packet.message, peer_id, peer.nickname if type(peer) is Client else "",
@@ -174,9 +174,9 @@ def new_message_callback(packet: Packet, peer: Peer, window):
         messages_list.addItem(item)
         messages_list.setItemWidget(item, message_item_widget)
         messages_list.scrollToBottom()
-        save_message(peer_id, packet.message, peer_id, peer.nickname if type(peer) is Client else "")
+        save_message(peer.peer_id, packet.message, peer_id, peer.nickname if type(peer) is Client else "")
     elif action == DeleteMessageAction().action:
-        delete_message(peer_id, packet.message.message_id)
+        delete_message(peer.peer_id, packet.message.message_id)
         for index in range(messages_list.count()):
             message_item = messages_list.item(index)
             message_item_widget: MessageItemWidget = messages_list.itemWidget(message_item)
@@ -184,7 +184,7 @@ def new_message_callback(packet: Packet, peer: Peer, window):
                 messages_list.takeItem(messages_list.row(message_item))
                 break
     elif action == EditMessageAction().action:
-        edit_message(peer_id, packet.message)
+        edit_message(peer.peer_id, packet.message)
         for index in range(messages_list.count()):
             message_item = messages_list.item(index)
             message_item_widget: MessageItemWidget = messages_list.itemWidget(message_item)
@@ -217,7 +217,7 @@ def new_message_callback(packet: Packet, peer: Peer, window):
         messages_list.addItem(item)
         messages_list.setItemWidget(item, message_item_widget)
         messages_list.scrollToBottom()
-        save_message(peer_id, packet.message, peer.peer_id, True)
+        save_message(peer.peer_id, packet.message, peer.peer_id, True)
     elif action == DisconnectAction().action:
         pass
         # TODO peer has disconnected
@@ -237,7 +237,7 @@ def new_message_callback(packet: Packet, peer: Peer, window):
         sleep(0.5)
         dialogs_list = window.centralWidget().dialogs_list_frame.dialogs_list
         dialogs_list.takeItem(dialogs_list.row(dialogs_list.currentItem()))
-        delete_dialog(peer_id)
+        delete_dialog(peer.peer_id)
 
 
 def invalid_message_callback(reason, message, peer):
