@@ -269,9 +269,12 @@ class DialogsListRootWidget(QFrame):
 
             share_info_action = QAction('Share Your Info', self)
             share_info_action.triggered.connect(lambda: self.share_info(peer_id))
+            self.menu.addAction(share_info_action)
 
-            request_info_action = QAction('Request Peer Info', self)
-            request_info_action.triggered.connect(lambda: self.request_info(peer_id))
+            if item.chat_type != 2:
+                request_info_action = QAction('Request Peer Info', self)
+                request_info_action.triggered.connect(lambda: self.request_info(peer_id))
+                self.menu.addAction(request_info_action)
 
             clear_history_action = QAction('Clear History', self)
             clear_history_action.triggered.connect(lambda: self.clear_history(peer_id))
@@ -279,8 +282,6 @@ class DialogsListRootWidget(QFrame):
             delete_dialog_action = QAction('Delete Dialog', self)
             delete_dialog_action.triggered.connect(lambda: self.delete_dialog(item))
 
-            self.menu.addAction(share_info_action)
-            self.menu.addAction(request_info_action)
             self.menu.addAction(clear_history_action)
             self.menu.addAction(delete_dialog_action)
 
