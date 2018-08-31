@@ -107,5 +107,4 @@ venv.bak/
 files/storage.db
 files/settings.db
 files/messaging.db
-README.md
 /.idea/

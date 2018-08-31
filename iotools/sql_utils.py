@@ -21,18 +21,23 @@ def create_dialogs_table():
                       [ColumnTypes.TEXT, ColumnTypes.NUMERIC, ColumnTypes.NUMERIC, ColumnTypes.TEXT, ColumnTypes.TEXT, ColumnTypes.NUMERIC])
 
 
+def create_category_table(category: Category):
+    sql_manager = SQLManager.get_instance(DB_SETTINGS)
+    if not sql_manager.has_table(category.name):
+        sql_manager.add_record("_categories", ["name", "display_name"], [category.name, category.display_name])
+
+    sql_manager.create_table(category.name,
+                             ["name", "value", "type", "display_name"],
+                             [ColumnTypes.TEXT, ColumnTypes.TEXT, ColumnTypes.NUMERIC, ColumnTypes.TEXT])
+
+
 def create_settings_table():
     sql_manager = SQLManager.get_instance(DB_SETTINGS)
     sql_manager.create_table("_categories",
                              ["name", "display_name"],
                              [ColumnTypes.TEXT, ColumnTypes.TEXT])
 
-    if not sql_manager.has_table("general"):
-        sql_manager.add_record("_categories", ["name", "display_name"], ["general", "General"])
-
-    sql_manager.create_table("general",
-                             ["name", "value", "type", "display_name"],
-                             [ColumnTypes.TEXT, ColumnTypes.TEXT, ColumnTypes.NUMERIC, ColumnTypes.TEXT])
+    create_category_table(Category("general", "General"))
 
 
 def create_storage_table():
@@ -66,6 +71,9 @@ def save_settings_to_db(settings: Settings):
     sql_manager = SQLManager.get_instance(DB_SETTINGS)
 
     for category, setting in settings.iterate():
+        if settings.is_new_category(category):
+            create_category_table(category)
+
         if settings.is_new(category, setting):
             sql_manager.add_record(
                 category.name,
