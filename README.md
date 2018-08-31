@@ -6,7 +6,7 @@ Readme that you would probably like to read is [here](https://github.com/arteria
 
 ## Current Task
 
-- Rework messages list UI so that it can display peer_id and username of message author
+- Drafts for dialogs
 
 ## Planned/In Development already
 
@@ -14,6 +14,5 @@ Readme that you would probably like to read is [here](https://github.com/arteria
 - Notifications (lot of work here)
 - Database encryption
 - Theming support (lots of things should be changed)
-- Drafts for dialogs (probably next task)
 
 **Issues for beta version are not accepted!**
