@@ -3,7 +3,7 @@ from time import sleep
 from typing import Optional
 
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QInputDialog, QMessageBox, QListWidget, QWidget, QListWidgetItem
+from PyQt5.QtWidgets import QInputDialog, QMessageBox, QListWidget, QWidget, QListWidgetItem, QAbstractItemView
 
 from client import client_base
 from client.models.actions import *
@@ -11,6 +11,8 @@ from client.models.messages import Message, Data
 from client.models.packets import Packet
 from client.models.peers import Peer, Client
 from iotools.sql_utils import delete_dialog, save_message, create_dialog, get_messages, delete_message, edit_message, update_dialog_info
+from iotools.storage import AppStorage
+from models.storage import Category
 from tools import full_strip
 from widgets.dialogs.dialogs_list import DialogItemWidget
 from widgets.message_boxes.message_delete_box import DeleteMsgMessageBox
@@ -90,6 +92,10 @@ def new_chat_click_callback(widget):
 
 def dialog_item_changed_callback(current: DialogItemWidget, window):
     messages_list: QListWidget = window.centralWidget().opened_dialog_frame.messages_list
+    scroll_type = QAbstractItemView.ScrollPerItem
+    if bool(int(AppStorage.get_settings().get(Category("ui", "User Interface"), "enable_smooth_scroll").value)):
+        scroll_type = QAbstractItemView.ScrollPerPixel
+    messages_list.setVerticalScrollMode(scroll_type)
     messages_list.clear()
     if current:
         messages = get_messages(current.peer_id)

@@ -34,29 +34,36 @@ class Settings:
         self.__settings = dict()
         self.__new_settings = dict()
 
-    def has(self, category: Category, setting: Setting) -> bool:
-        for existing_setting in self.__settings[category]:
-            if setting.key == existing_setting.key:
-                return True
-        return False
-
     def set(self, possibly_new_category: Category, setting: Setting, init: bool = False):
         category = Categories.get_category(possibly_new_category.name, possibly_new_category.display_name)
+
+        if init:
+            if category not in self.__settings.keys():
+                self.__settings[category] = list()
+
+            self.__settings[category].append(setting)
+            return
+
         if category not in self.__settings.keys():
             self.__settings[category] = list()
+            self.__new_settings[category] = list()
 
-        if not self.has(category, setting):
-            if init:
-                self.__settings[category].append(setting)
-            else:
-                if category not in self.__new_settings.keys():
-                    self.__new_settings[category] = list()
+        if setting not in self.__settings[category]:
+            self.__settings[category].append(setting)
+
+            if category not in self.__new_settings.keys():
+                self.__new_settings[category] = list()
+
+            if setting not in self.__new_settings[category]:
                 self.__new_settings[category].append(setting)
-        else:
-            for existing_setting in self.__settings.get(category, list()):
-                if setting.key == existing_setting.key:
-                    self.__settings[category][self.__settings[category].index(existing_setting)] = setting
-                    return
+
+        for existing_setting in self.__settings[category]:
+            if existing_setting.key == setting.key:
+                existing_setting.value = setting.value
+
+        for existing_setting in self.__new_settings[category]:
+            if existing_setting.key == setting.key:
+                existing_setting.value = setting.value
 
     def get(self, category: Category, key: str) -> Setting:
         for setting in self.__settings.get(Categories.get_category(category.name, category.display_name), list()):
@@ -67,8 +74,12 @@ class Settings:
         category = Categories.get_category(possibly_new_category.name, possibly_new_category.display_name)
         return setting in self.__new_settings.get(category, list())
 
+    def is_new_category(self, possibly_new_category: Category) -> bool:
+        category = Categories.get_category(possibly_new_category.name, possibly_new_category.display_name)
+        return category in self.__new_settings
+
     def iterate(self) -> tuple:
-        for category, settings in list(self.__settings.items()) + list(self.__new_settings.items()):
+        for category, settings in self.__settings.items():
             for setting in settings:
                 yield category, setting
 
