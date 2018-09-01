@@ -18,18 +18,6 @@ class ColumnTypes:
     NUMERIC = "NUMERIC"
 
 
-class SQLManager:
-    __instances = dict()
-
-    @staticmethod
-    def get_instance(database: str):
-        if SQLManager.__instances.get(database):
-            return SQLManager.__instances[database]
-        else:
-            SQLManager.__instances[database] = SQLUtil(database)
-            return SQLManager.__instances[database]
-
-
 class Query:
     def __init__(self, columns: list, values: list):
         self.columns = columns
@@ -77,7 +65,7 @@ class SQLUtil:
 
     def select_single(self, field: str, query: str, table: str) -> tuple:
         with self.__connection:
-            query = 'SELECT * FROM {0} WHERE {1} = {2}'.format(table, field, query)
+            query = "SELECT * FROM {0} WHERE {1} = '{2}'".format(table, field, query)
             self.log_operation(self.database, query)
             return self.__cursor.execute(query).fetchone()
 
@@ -119,3 +107,15 @@ class SQLUtil:
     def close_db(self):
         self.__cursor.close()
         self.__connection.close()
+
+
+class SQLManager:
+    __instances = dict()
+
+    @staticmethod
+    def get_instance(database: str) -> SQLUtil:
+        if SQLManager.__instances.get(database):
+            return SQLManager.__instances[database]
+        else:
+            SQLManager.__instances[database] = SQLUtil(database)
+            return SQLManager.__instances[database]

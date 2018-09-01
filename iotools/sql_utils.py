@@ -7,6 +7,7 @@ def init_databases():
     create_dialogs_table()
     create_settings_table()
     create_storage_table()
+    create_drafts_table()
 
 
 def save_databases(settings: Settings, storage: Storage):
@@ -45,6 +46,27 @@ def create_storage_table():
         .create_table("storage",
                       ["name", "value"],
                       [ColumnTypes.TEXT, ColumnTypes.TEXT])
+
+
+def create_drafts_table():
+    manager = SQLManager.get_instance(DB_MESSAGING)
+    manager.create_table("drafts",
+                         ["peer_id", "draft"],
+                         [ColumnTypes.TEXT, ColumnTypes.TEXT])
+
+    for _, _, _, peer_id, _, _ in manager.select_all("dialogs"):
+        manager.add_record("drafts", ["peer_id", "draft"], [peer_id, ""])
+
+
+def save_draft(peer_id: str, draft: str):
+    SQLManager.get_instance(DB_MESSAGING) \
+        .edit_record(Query(["peer_id"], [peer_id]),
+                     "drafts",
+                     ["draft"], [draft])
+
+
+def get_draft(peer_id: str):
+    return SQLManager.get_instance(DB_MESSAGING).select_single("peer_id", peer_id, "drafts")[1]
 
 
 def get_settings_from_db() -> Settings:
@@ -132,24 +154,24 @@ def update_dialog_info(nickname: str, port: int, peer_id: str):
 
 def delete_dialog(peer_id: str):
     SQLManager.get_instance(DB_MESSAGING).delete_record(
-        "dialogs", "peer_id='{}'".format(peer_id))
+        "dialogs", f"peer_id='{peer_id}'")
     delete_messages_table_for_dialog(peer_id)
 
 
 def create_messages_table_for_dialog(peer_id: str):
     SQLManager.get_instance(DB_MESSAGING).create_table(
-        "messages_{}".format(peer_id),
+        f"messages_{peer_id}",
         ["message_id", "timestamp", "text", "mine", "service", "from_peer_id", "from_nickname"],
         [ColumnTypes.TEXT, ColumnTypes.NUMERIC, ColumnTypes.TEXT, ColumnTypes.INTEGER, ColumnTypes.INTEGER, ColumnTypes.TEXT, ColumnTypes.TEXT])
 
 
 def delete_messages_table_for_dialog(peer_id: str):
-    SQLManager.get_instance(DB_MESSAGING).delete_table("messages_{}".format(peer_id))
+    SQLManager.get_instance(DB_MESSAGING).delete_table(f"messages_{peer_id}")
 
 
 def save_message(peer_id: str, message: Message, from_peer_id: str, service: bool = False, from_nickname: str = ""):
     SQLManager.get_instance(DB_MESSAGING).add_record(
-        "messages_{}".format(peer_id),
+        f"messages_{peer_id}",
         ["message_id", "timestamp", "text", "mine", "service", "from_peer_id", "from_nickname"],
         [message.message_id, message.timestamp, message.text.replace("'", "''"), 1 if message.mine else 0, 1 if service else 0, from_peer_id,
          from_nickname])
@@ -157,21 +179,21 @@ def save_message(peer_id: str, message: Message, from_peer_id: str, service: boo
 
 def delete_message(peer_id: str, message_id: str):
     SQLManager.get_instance(DB_MESSAGING).delete_record(
-        "messages_{}".format(peer_id),
-        "message_id='{}'".format(message_id))
+        f"messages_{peer_id}",
+        f"message_id='{message_id}'")
 
 
 def edit_message(peer_id: str, message: Message):
     SQLManager.get_instance(DB_MESSAGING).edit_record(
         Query(["message_id"], [message.message_id]),
-        "messages_{}".format(peer_id),
+        f"messages_{peer_id}",
         ["text"],
         [message.text]
     )
 
 
 def get_messages(peer_id):
-    messages = SQLManager.get_instance(DB_MESSAGING).select_all("messages_{}".format(peer_id))
+    messages = SQLManager.get_instance(DB_MESSAGING).select_all(f"messages_{peer_id}")
     res = list()
     for msg in messages:
         res.append((Message(message_id=msg[0], timestamp=msg[1], text=msg[2], mine=msg[3] == 1), bool(msg[4]), msg[5], msg[6]))

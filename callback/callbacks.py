@@ -3,14 +3,15 @@ from time import sleep
 from typing import Optional
 
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QInputDialog, QMessageBox, QListWidget, QWidget, QListWidgetItem, QAbstractItemView
+from PyQt5.QtWidgets import QInputDialog, QMessageBox, QListWidget, QWidget, QListWidgetItem, QAbstractItemView, QTextEdit
 
 from client import client_base
 from client.models.actions import *
 from client.models.messages import Message, Data
 from client.models.packets import Packet
 from client.models.peers import Peer, Client
-from iotools.sql_utils import delete_dialog, save_message, create_dialog, get_messages, delete_message, edit_message, update_dialog_info
+from iotools.sql_utils import delete_dialog, save_message, create_dialog, get_messages, delete_message, edit_message, update_dialog_info, save_draft, \
+    get_draft, create_drafts_table
 from iotools.storage import AppStorage
 from models.storage import Category
 from tools import full_strip
@@ -90,15 +91,23 @@ def new_chat_click_callback(widget):
         alert_box.exec_()
 
 
-def dialog_item_changed_callback(current: DialogItemWidget, window):
+def dialog_item_changed_callback(current: DialogItemWidget, previous: DialogItemWidget, window):
     messages_list: QListWidget = window.centralWidget().opened_dialog_frame.messages_list
+    message_input: QTextEdit = window.centralWidget().opened_dialog_frame.message_input.message_input
     scroll_type = QAbstractItemView.ScrollPerItem
     if bool(int(AppStorage.get_settings().get(Category("ui", "User Interface"), "enable_smooth_scroll").value)):
         scroll_type = QAbstractItemView.ScrollPerPixel
     messages_list.setVerticalScrollMode(scroll_type)
     messages_list.clear()
+
+    if previous:
+        save_draft(previous.peer_id, full_strip(message_input.toPlainText()))
+    message_input.clear()
+
     if current:
         messages = get_messages(current.peer_id)
+        draft = get_draft(current.peer_id)
+        message_input.setText(draft)
 
         for message in messages:
             message_item_widget = MessageItemWidget(message[0], message[2], message[3], service=message[1],
@@ -150,6 +159,7 @@ def accept_incoming_connection(widget, address):
         peer_id = info[1].peer_id
         dialog = DialogItemWidget("", address[0], address[1], 0, peer_id=peer_id)
         create_dialog(address[0], address[1], 0, peer_id)
+        create_drafts_table()
         dialogs_list = widget.dialogs_list
         dialogs_list.addItem(dialog)
         dialogs_list.setCurrentItem(dialog)

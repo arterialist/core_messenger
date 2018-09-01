@@ -3,7 +3,7 @@ import sys
 
 from PyQt5.QtCore import Qt, QSize, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QIcon, QPalette, QCursor, QCloseEvent, QKeySequence
-from PyQt5.QtWidgets import QApplication, QAction, qApp, QMainWindow, QHBoxLayout, QFrame, QSplitter, QVBoxLayout, QAbstractItemView, QMenu, \
+from PyQt5.QtWidgets import QApplication, QAction, qApp, QMainWindow, QHBoxLayout, QFrame, QSplitter, QVBoxLayout, QMenu, \
     QTabWidget, QShortcut
 
 import color_palette
@@ -204,7 +204,7 @@ class DialogsListRootWidget(QFrame):
         self.dialogs_list.setPalette(p)
         self.dialogs_list.setIconSize(QSize(40, 40))
         self.dialogs_list.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.dialogs_list.currentItemChanged.connect(lambda current, previous: dialog_item_changed_callback(current, main_window))
+        self.dialogs_list.currentItemChanged.connect(lambda current, previous: dialog_item_changed_callback(current, previous, main_window))
         self.dialogs_list.setSpacing(5)
 
         self.dialogs_list.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -245,7 +245,7 @@ class DialogsListRootWidget(QFrame):
         self.setLayout(layout)
 
     def close_dialog_event(self):
-        dialog_item_changed_callback(None, main_window)
+        dialog_item_changed_callback(None, self.dialogs_list.currentItem(), main_window)
         if self.dialogs_list.currentItem():
             self.dialogs_list.currentItem().setSelected(False)
 
@@ -452,4 +452,8 @@ if __name__ == '__main__':
         sys.exit(app.exec_())
     finally:
         save_databases(AppStorage.get_settings(), AppStorage.get_storage())
+        current_item = main_window.centralWidget().dialogs_list_frame.dialogs_list.currentItem()
+        if current_item:
+            message_input = main_window.centralWidget().opened_dialog_frame.message_input.message_input
+            save_draft(current_item.peer_id, full_strip(message_input.toPlainText()))
         client_base.finish()
