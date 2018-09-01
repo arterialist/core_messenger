@@ -1,3 +1,4 @@
+import datetime
 import platform
 import sys
 
@@ -13,7 +14,7 @@ from client.models.messages import Data
 from iotools.sql_base import SQLManager, DB_MESSAGING
 from iotools.sql_utils import init_databases, save_databases, delete_messages_table_for_dialog, create_messages_table_for_dialog
 from iotools.storage import AppStorage
-from models.logging import Logger
+from models.logging import Logger, FileLogChannel
 from models.storage import Category
 from tools import full_strip
 from widgets.dialogs.dialogs_head import DialogsListHeadWidget
@@ -24,6 +25,7 @@ from widgets.windows.settings_window import SettingsWindow
 main_window = None
 settings_window = None
 Logger.get_channel("SQL", True).disable()
+Logger.set_channel(FileLogChannel("FILE", f"{datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}.txt"))
 general_log = Logger.get_channel("GENERAL", True)
 init_databases()
 
@@ -436,7 +438,17 @@ class OpenedDialogWidget(QFrame):
             self.menu.popup(QCursor.pos())
 
 
+def excepthook(exctype, value, tb):
+    import traceback
+    Logger.get_channel("FILE").log(str(value))
+    Logger.get_channel("FILE").log(''.join(traceback.format_tb(tb)))
+
+    sys.__excepthook__(exctype, value, traceback)
+
+
 if __name__ == '__main__':
+    sys.excepthook = excepthook
+
     if platform.system() == "Windows":
         import ctypes
 

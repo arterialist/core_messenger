@@ -14,6 +14,17 @@ class LogChannel:
         self.enabled = False
 
 
+class FileLogChannel(LogChannel):
+    def __init__(self, name: str, file_path: str, enabled: bool = True):
+        super().__init__(name, enabled)
+        self.file_path = file_path
+
+    def log(self, message: str):
+        with open(self.file_path, "a") as f:
+            f.write(message)
+            f.write("\n")
+
+
 class Logger:
     __channels = dict()
 
@@ -25,8 +36,13 @@ class Logger:
         return Logger.__channels.get(name, LogChannel("stub", enabled=False))
 
     @staticmethod
+    def set_channel(channel: LogChannel):
+        Logger.__channels[channel.name] = channel
+
+    @staticmethod
     def remove_channel(name):
-        Logger.__channels.pop(name)
+        if name in Logger.__channels.keys():
+            Logger.__channels.pop(name)
 
     @staticmethod
     def mute():
