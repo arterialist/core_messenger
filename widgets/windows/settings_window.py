@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QWidget, QMainWindow, QListWidget, QHBoxLayout, QVBo
 
 import color_palette
 from iotools.storage import AppStorage
-from models.storage import Setting
+from models.storage import Setting, SETTING_CHECKBOX, SETTING_TEXT
 
 
 class SettingsWindow(QMainWindow):
@@ -119,10 +119,10 @@ class SettingsItemValueWidget(QWidget):
 
     def get_layout(self):
         layout = QHBoxLayout()
-        if self.setting_type == 0:
+        if self.setting_type == SETTING_CHECKBOX:
             self.checkbox.setChecked(bool(int(self.value)))
             layout.addWidget(self.checkbox)
-        elif self.setting_type == 1:
+        elif self.setting_type == SETTING_TEXT:
             self.editable.setText(self.value)
             layout.addWidget(self.editable)
 
@@ -131,9 +131,9 @@ class SettingsItemValueWidget(QWidget):
 
     def get_value(self):
         value = None
-        if self.setting_type == 0:
+        if self.setting_type == SETTING_CHECKBOX:
             value = self.checkbox.isChecked()
-        elif self.setting_type == 1:
+        elif self.setting_type == SETTING_TEXT:
             value = str(self.editable.text())
 
         return value
