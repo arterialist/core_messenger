@@ -58,7 +58,7 @@ class Settings:
             if existing_setting.key == setting.key:
                 existing_setting.value = setting.value
 
-        for existing_setting in self.__new_settings[category]:
+        for existing_setting in self.__new_settings.get(category, list()):
             if existing_setting.key == setting.key:
                 existing_setting.value = setting.value
 
