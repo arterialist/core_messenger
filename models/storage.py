@@ -14,11 +14,8 @@ class Categories:
         return Categories.__categories[name]
 
 
-"""
-setting type:
-0 - checkbox
-1 - editable
-"""
+SETTING_CHECKBOX = 0
+SETTING_TEXT = 1
 
 
 class Setting:
