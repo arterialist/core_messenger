@@ -1,7 +1,4 @@
-import platform
-
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPalette, QColor
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
 
 import color_palette
@@ -37,8 +34,7 @@ class DialogsListHeadWidget(QWidget):
         self.new_dialog_button.clicked.connect(lambda: new_dialog_click_callback(self))
         self.new_chat_button.clicked.connect(lambda: new_chat_click_callback(self))
 
-        if platform.system() != "Linux":
-            button_style = """
+        button_style = """
                 QPushButton {
                     border: 2px solid """ + color_palette.primary + """;
                     border-radius: 3px;
@@ -50,13 +46,8 @@ class DialogsListHeadWidget(QWidget):
                     background-color: """ + color_palette.primary_dark + """;
                 }
             """
-            self.new_dialog_button.setStyleSheet(button_style)
-            self.new_chat_button.setStyleSheet(button_style)
-
-        palette = self.new_dialog_button.palette()
-        palette.setColor(QPalette.Button, QColor(color_palette.primary_light))
-        self.new_dialog_button.setPalette(palette)
-        self.new_chat_button.setPalette(palette)
+        self.new_dialog_button.setStyleSheet(button_style)
+        self.new_chat_button.setStyleSheet(button_style)
 
         layout.addWidget(dialogs_label)
         layout.addWidget(self.new_chat_button)

@@ -1,5 +1,3 @@
-import platform
-
 from PyQt5.QtGui import QPalette, QColor, QKeySequence
 from PyQt5.QtWidgets import QPushButton, QTextEdit, QFrame, QHBoxLayout, QShortcut
 
@@ -27,16 +25,12 @@ class MessageInputWidget(QFrame):
 
         self.send_button.setFixedWidth(60)
         self.send_button.setFixedHeight(30)
-        p = self.send_button.palette()
-        p.setColor(QPalette.Button, QColor(color_palette.primary_light))
-        self.send_button.setPalette(p)
         self.send_button.clicked.connect(lambda: self.send_button_clicked())
         shortcut = QShortcut(QKeySequence("Ctrl+Return"), self.send_button)
         shortcut.activated.connect(lambda: self.send_button_clicked(True))
         shortcut.setEnabled(True)
         self.send_button.clicked.connect(lambda: self.send_button_clicked(True))
-        if platform.system() != "Linux":
-            self.send_button.setStyleSheet("""
+        self.send_button.setStyleSheet("""
                     QPushButton {
                         border: 2px solid """ + color_palette.primary + """;
                         border-radius: 3px;

@@ -250,6 +250,7 @@ class DialogsListRootWidget(QFrame):
         dialog_item_changed_callback(None, self.dialogs_list.currentItem(), main_window)
         if self.dialogs_list.currentItem():
             self.dialogs_list.currentItem().setSelected(False)
+            self.dialogs_list.setCurrentRow(-1)
 
     def open_dialog_above(self):
         current = self.dialogs_list.currentRow()

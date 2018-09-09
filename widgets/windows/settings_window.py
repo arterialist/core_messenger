@@ -1,11 +1,11 @@
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtGui import QPalette, QColor, QFont
 from PyQt5.QtWidgets import QWidget, QMainWindow, QListWidget, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QSizePolicy, QCheckBox, QLineEdit, \
-    QAbstractItemView, QScrollArea, QListWidgetItem
+    QAbstractItemView, QScrollArea, QListWidgetItem, QFileDialog
 
 import color_palette
 from iotools.storage import AppStorage
-from models.storage import Setting, SETTING_CHECKBOX, SETTING_TEXT
+from models.storage import Setting, SETTING_CHECKBOX, SETTING_TEXT, SETTING_FILE
 
 
 class SettingsWindow(QMainWindow):
@@ -17,6 +17,7 @@ class SettingsWindow(QMainWindow):
     def init_ui(self):
         self.setWindowTitle("Settings")
         self.setGeometry(150, 150, 600, 600)
+        self.setFixedWidth(600)
 
         p = self.palette()
         p.setColor(QPalette.Background, QColor(color_palette.primary))
@@ -62,7 +63,7 @@ class SettingsRootWidget(QWidget):
 
         self.setLayout(layout)
 
-    def category_changed(self, current, previous):
+    def category_changed(self, _, previous):
         if previous:
             layout = self.layout()
             layout.removeWidget(self.settings_container)
@@ -111,6 +112,7 @@ class SettingsItemValueWidget(QWidget):
 
         self.checkbox = QCheckBox()
         self.editable = QLineEdit()
+        self.button = QPushButton()
         self.init_ui()
 
     def init_ui(self):
@@ -125,15 +127,27 @@ class SettingsItemValueWidget(QWidget):
         elif self.setting_type == SETTING_TEXT:
             self.editable.setText(self.value)
             layout.addWidget(self.editable)
+        elif self.setting_type == SETTING_FILE:
+            self.editable.setText(self.value)
+            self.button.setText("Choose")
+            self.button.clicked.connect(self.choose_file_callback)
+            layout.addWidget(self.editable)
+            layout.addWidget(self.button)
 
         layout.setContentsMargins(0, 0, 0, 0)
         return layout
+
+    def choose_file_callback(self):
+        file_path: QUrl = (QFileDialog.getOpenFileUrl(caption="Choose file"))[0]
+        file_path: str = file_path.toString()
+        if file_path:
+            self.editable.setText(file_path)
 
     def get_value(self):
         value = None
         if self.setting_type == SETTING_CHECKBOX:
             value = self.checkbox.isChecked()
-        elif self.setting_type == SETTING_TEXT:
+        elif self.setting_type in [SETTING_TEXT, SETTING_FILE]:
             value = str(self.editable.text())
 
         return value

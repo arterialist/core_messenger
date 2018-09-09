@@ -16,6 +16,7 @@ class Categories:
 
 SETTING_CHECKBOX = 0
 SETTING_TEXT = 1
+SETTING_FILE = 2
 
 
 class Setting:
