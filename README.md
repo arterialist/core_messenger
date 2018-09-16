@@ -6,12 +6,11 @@ Readme that you would probably like to read is [here](https://github.com/arteria
 
 ## Current Task
 
-- Theming support (lots of things should be changed)
+- Notifications (lot of work here)
 
 ## Planned/In Development already
 
 - Switch between Enter/Ctrl+Enter shortcut for sending message
-- Notifications (lot of work here)
 - Database encryption
 
 **Issues for beta version are not accepted!**

@@ -1,11 +1,12 @@
 from PyQt5.QtCore import Qt, QUrl
-from PyQt5.QtGui import QPalette, QColor, QFont
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QMainWindow, QListWidget, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QSizePolicy, QCheckBox, QLineEdit, \
     QAbstractItemView, QScrollArea, QListWidgetItem, QFileDialog
 
-import color_palette
 from iotools.storage import AppStorage
 from models.storage import Setting, SETTING_CHECKBOX, SETTING_TEXT, SETTING_FILE
+from theming import styles
+from theming.theme_loader import ThemeLoader
 
 
 class SettingsWindow(QMainWindow):
@@ -19,9 +20,7 @@ class SettingsWindow(QMainWindow):
         self.setGeometry(150, 150, 600, 600)
         self.setFixedWidth(600)
 
-        p = self.palette()
-        p.setColor(QPalette.Background, QColor(color_palette.primary))
-        self.setPalette(p)
+        self.setStyleSheet(ThemeLoader.loaded_theme.apply_to_stylesheet(styles.main_window_style))
 
         self.setCentralWidget(SettingsRootWidget())
 
@@ -36,10 +35,11 @@ class SettingsRootWidget(QWidget):
         self.init_ui()
 
     def init_ui(self):
+        theme = ThemeLoader.loaded_theme
+        self.setStyleSheet(theme.apply_to_stylesheet(styles.main_window_style))
+
         self.categories_list.setFixedWidth(200)
-        p = self.categories_list.palette()
-        p.setColor(QPalette.Base, QColor(color_palette.primary_dark))
-        self.categories_list.setPalette(p)
+        self.categories_list.setStyleSheet(theme.apply_to_stylesheet(styles.settings_categories_list_style))
         self.categories_list.currentItemChanged.connect(self.category_changed)
         self.categories_list.setSelectionMode(QAbstractItemView.SingleSelection)
 
@@ -49,7 +49,6 @@ class SettingsRootWidget(QWidget):
         self.current_category = settings.get_categories()[0]
         for category in settings.get_categories():
             item = QListWidgetItem(category.display_name)
-            item.setForeground(QColor("#DDD"))
             self.categories_list.addItem(item)
 
         self.settings_container = SettingsContainerWidget(first_settings)
@@ -121,6 +120,7 @@ class SettingsItemValueWidget(QWidget):
 
     def get_layout(self):
         layout = QHBoxLayout()
+        self.button.setStyleSheet(ThemeLoader.loaded_theme.get_default_for_widget(self.button))
         if self.setting_type == SETTING_CHECKBOX:
             self.checkbox.setChecked(bool(int(self.value)))
             layout.addWidget(self.checkbox)
@@ -170,17 +170,19 @@ class SettingsContainerWidget(QWidget):
     def init_ui(self):
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignTop)
-        p = self.palette()
-        p.setColor(QPalette.Base, QColor(color_palette.primary))
-        self.setPalette(p)
+        self.setStyleSheet(ThemeLoader.loaded_theme.apply_to_stylesheet(styles.settings_category_opened_style))
 
         settings_layout = QVBoxLayout()
         settings_layout.setAlignment(Qt.AlignTop)
         self.settings_list.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
+        button_style = ThemeLoader.loaded_theme.get_default_for_widget(self.ok_button)
         self.cancel_button.clicked.connect(self.cancel_settings)
+        self.cancel_button.setStyleSheet(button_style)
         self.apply_button.clicked.connect(self.apply_settings)
+        self.apply_button.setStyleSheet(button_style)
         self.ok_button.clicked.connect(self.save_and_exit)
+        self.ok_button.setStyleSheet(button_style)
 
         action_buttons_layout = QHBoxLayout()
         action_buttons_layout.setAlignment(Qt.AlignRight)
