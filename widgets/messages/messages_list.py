@@ -1,9 +1,9 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor, QPalette
 from PyQt5.QtWidgets import QVBoxLayout, QLabel, QHBoxLayout, QWidget, QSizePolicy, QLayout
 
-import color_palette
 from client.models.messages import Message
+from theming import styles
+from theming.theme_loader import ThemeLoader
 
 
 class MessageItemWidget(QWidget):
@@ -24,42 +24,34 @@ class MessageItemWidget(QWidget):
 
     def init_ui(self):
         layout = QVBoxLayout()
-        background_color = color_palette.palette["blue_grey"][800]
-        if self.message.mine:
-            background_color = color_palette.primary
-        elif self.service:
-            background_color = "#80546E7A"
+        theme = ThemeLoader.loaded_theme
 
         if not self.service:
             self.message_text.setWordWrap(True)
         self.message_text.setText(self.message.text)
-        p = self.message_text.palette()
-        p.setColor(QPalette.Text, QColor("#DDDDDD") if self.service else QColor("#FFFFFF"))
-        self.message_text.setPalette(p)
+
         bl_radius = "10px" if self.message.mine else "10px" if self.service else "0px"
         br_radius = "0px" if self.message.mine else "10px" if self.service else "10px"
-        self.message_text.setStyleSheet(
-            """
-            QWidget {
-                background-color: """ + background_color + """;
-                border-top-left-radius: 10px;
-                border-top-right-radius: 10px;
-                border-bottom-left-radius: """ + bl_radius + """;
-                border-bottom-right-radius: """ + br_radius + """;
-                padding: 5px;
+
+        if self.message.mine:
+            stylesheet = styles.my_message_balloon
+        elif self.service:
+            stylesheet = styles.service_message_balloon
+        else:
+            stylesheet = styles.their_message_balloon
+
+        self.message_text.setStyleSheet(theme.apply_to_stylesheet(
+            stylesheet,
+            {
+                "blRadius": bl_radius,
+                "brRadius": br_radius
             }
-            """
-        )
+        ))
 
         if self.from_peer_id and self.from_peer_id != self.previous_peer_id and not self.service:
             text = self.from_peer_id
             text += f"({self.from_nickname})" if self.from_nickname else ""
-            p = self.message_text.palette()
-            p.setColor(QPalette.Text, QColor("#DDDDFF"))
-            font = self.name_text.font()
-            font.setBold(True)
-            self.name_text.setPalette(p)
-            self.name_text.setFont(font)
+            self.name_text.setStyleSheet(theme.apply_to_stylesheet(styles.nickname_label))
             self.name_text.setText(text)
             self.name_text.setContentsMargins(5, 2, 2, 2)
             layout.addWidget(self.name_text)

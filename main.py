@@ -3,11 +3,10 @@ import platform
 import sys
 
 from PyQt5.QtCore import Qt, QSize, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QIcon, QPalette, QCursor, QCloseEvent, QKeySequence
+from PyQt5.QtGui import QIcon, QCursor, QCloseEvent, QKeySequence
 from PyQt5.QtWidgets import QApplication, QAction, qApp, QMainWindow, QHBoxLayout, QFrame, QSplitter, QVBoxLayout, QMenu, \
     QTabWidget, QShortcut
 
-import color_palette
 from callback.callbacks import *
 from client import client_base
 from client.models.messages import Data
@@ -16,6 +15,8 @@ from iotools.sql_utils import init_databases, save_databases, delete_messages_ta
 from iotools.storage import AppStorage
 from models.logging import Logger, FileLogChannel
 from models.storage import Category
+from theming import styles
+from theming.theme_loader import ThemeLoader
 from tools import full_strip
 from widgets.dialogs.dialogs_head import DialogsListHeadWidget
 from widgets.message_boxes.basic import ConfirmationMessageBox
@@ -64,9 +65,7 @@ class MainWindow(QMainWindow):
         file_menu.addAction(settings_action)
         file_menu.addAction(exit_action)
 
-        p = self.palette()
-        p.setColor(QPalette.Background, QColor(color_palette.primary))
-        self.setPalette(p)
+        self.setStyleSheet(ThemeLoader.loaded_theme.apply_to_stylesheet(styles.main_window_style))
 
         self.setCentralWidget(RootWidget())
 
@@ -141,6 +140,8 @@ class RootWidget(QWidget):
     def init_ui(self):
         layout = QHBoxLayout(self)
 
+        self.setStyleSheet(ThemeLoader.loaded_theme.apply_to_stylesheet(styles.main_window_style))
+
         self.dialogs_list_frame.setFrameShape(QFrame.StyledPanel)
         self.dialogs_list_frame.setMinimumWidth(200)
 
@@ -170,6 +171,7 @@ class DialogsListRootWidget(QFrame):
 
     def init_ui(self):
         layout = QVBoxLayout()
+        theme = ThemeLoader.loaded_theme
 
         # shortcuts setup
         close_dialog_shortcut = QShortcut(QKeySequence("Esc"), self)
@@ -201,9 +203,7 @@ class DialogsListRootWidget(QFrame):
         decline_connection_shortcut.setEnabled(True)
 
         # dialogs list setup
-        p = self.dialogs_list.palette()
-        p.setColor(QPalette.Base, QColor(color_palette.primary))
-        self.dialogs_list.setPalette(p)
+        self.dialogs_list.setStyleSheet(theme.apply_to_stylesheet(styles.side_list_style))
         self.dialogs_list.setIconSize(QSize(40, 40))
         self.dialogs_list.setSelectionMode(QAbstractItemView.SingleSelection)
         self.dialogs_list.currentItemChanged.connect(lambda current, previous: dialog_item_changed_callback(current, previous, main_window))
@@ -217,24 +217,12 @@ class DialogsListRootWidget(QFrame):
             self.dialogs_list.addItem(DialogItemWidget(item[4], item[0], item[1], item[2], peer_id=item[3]))
 
         # incoming list setup
-        p = self.incoming_list.palette()
-        p.setColor(QPalette.Base, QColor(color_palette.primary))
-        self.incoming_list.setPalette(p)
-
+        self.incoming_list.setStyleSheet(theme.apply_to_stylesheet(styles.side_list_style))
         self.incoming_list.setContextMenuPolicy(Qt.CustomContextMenu)
         self.incoming_list.customContextMenuRequested.connect(self.incoming_context_menu_event)
 
         # tabs setup
-        if platform.system() != "Linux":
-            self.tabs.setStyleSheet(
-                'QTabBar::tab:selected {background-color: ' + color_palette.primary + ';} ' +
-                'QTabBar::tab:!selected {background-color: ' + color_palette.primary_light + ';} ' +
-                'QTabWidget::pane { background-color: ' + color_palette.primary + ';} ' +
-                'QTabWidget::pane { border: none;} '
-            )
-        p = self.tabs.palette()
-        p.setColor(QPalette.Button, QColor(color_palette.primary))
-        self.tabs.setPalette(p)
+        self.tabs.setStyleSheet(theme.get_default_for_widget(self.tabs))
         self.tabs.addTab(self.dialogs_list, "Dialogs")
         self.tabs.addTab(self.incoming_list, "Incoming Connections")
 
@@ -250,6 +238,7 @@ class DialogsListRootWidget(QFrame):
         dialog_item_changed_callback(None, self.dialogs_list.currentItem(), main_window)
         if self.dialogs_list.currentItem():
             self.dialogs_list.currentItem().setSelected(False)
+            self.dialogs_list.setCurrentRow(-1)
 
     def open_dialog_above(self):
         current = self.dialogs_list.currentRow()
@@ -392,9 +381,7 @@ class OpenedDialogWidget(QFrame):
     def init_ui(self):
         layout = QVBoxLayout()
 
-        p = self.messages_list.palette()
-        p.setColor(QPalette.Base, QColor(color_palette.primary_dark))
-        self.messages_list.setPalette(p)
+        self.messages_list.setStyleSheet(ThemeLoader.loaded_theme.apply_to_stylesheet(styles.messages_list))
         self.messages_list.setSpacing(1)
         self.messages_list.showMinimized()
         self.messages_list.setWordWrap(True)
@@ -454,6 +441,12 @@ if __name__ == '__main__':
 
         win_app_id = 'arterialist.core_messenger'
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(win_app_id)
+
+    ThemeLoader.load_from_file(
+        AppStorage.get_settings().get(
+            Category("ui", "User Interface"),
+            "theme_file_path"
+        ).value)
 
     app = QApplication(sys.argv)
     main_window = MainWindow()

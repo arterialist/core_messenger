@@ -58,6 +58,13 @@ def create_drafts_table():
         manager.add_record("drafts", ["peer_id", "draft"], [peer_id, ""])
 
 
+def create_draft(peer_id: str):
+    SQLManager.get_instance(DB_MESSAGING) \
+        .add_record("drafts",
+                    ["peer_id", "draft"],
+                    [peer_id, ""])
+
+
 def save_draft(peer_id: str, draft: str):
     SQLManager.get_instance(DB_MESSAGING) \
         .edit_record(Query(["peer_id"], [peer_id]),
@@ -127,11 +134,13 @@ def save_storage_to_db(storage: Storage):
 
 
 def create_dialog(host: str, port: str, chat_type: int, peer_id: str):
-    SQLManager.get_instance(DB_MESSAGING).add_record(
+    sql_manager = SQLManager.get_instance(DB_MESSAGING)
+    sql_manager.add_record(
         "dialogs",
         ["host", "port", "chat_type", "peer_id", "nickname", "listening_port"],
         [host, port, chat_type, peer_id, "", ""])
     create_messages_table_for_dialog(peer_id)
+    create_draft(peer_id)
 
 
 def update_dialog(host: str, port: int, chat_type: int, peer_id: str):

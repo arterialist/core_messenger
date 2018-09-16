@@ -1,0 +1,30 @@
+dialogsHeadLabel = #DDDDDD
+dialogsListItemBackground = #546E7A
+
+buttonText = #DDDDDD
+buttonBorder = #546E7A
+buttonBackground = #455A64
+buttonBackgroundPressed = #263238
+
+nicknameTextColorDefault = #DDDDFF
+messageMyBackground = #546E7A
+messageTheirBackground = #37474F
+messageServiceBackground = #80546E7A
+messagesListBackground = #263238
+messageText = #FFFFFF
+messageServiceText = #DDDDDD
+
+mainWindowBackground = #546E7A
+sideListBackground = #546E7A
+sideListText = #DDDDDD
+
+settingsCategoriesListBackground = #263238
+settingsOpenedBackground = #546E7A
+settingsCategoryText = #DDDDDD
+
+multilineBackground = #455A64
+multilineTextColor = #DDDDDD
+
+tabsSelectedTabBackground = #546E7A
+tabsSelectedTabBorder = #455A64
+tabsUnselectedTabBackground = #455A64

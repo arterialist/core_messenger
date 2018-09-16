@@ -2,7 +2,6 @@ import copy
 from time import sleep
 from typing import Optional
 
-from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QInputDialog, QMessageBox, QListWidget, QWidget, QListWidgetItem, QAbstractItemView, QTextEdit
 
 from client import client_base
@@ -148,7 +147,6 @@ def toggle_listening_callback():
 
 def handle_incoming_connection_callback(incoming_list_widget: QListWidget, address):
     item = QListWidgetItem("{}:{}".format(address[0], address[1]))
-    item.setForeground(QColor("#DDD"))
     incoming_list_widget.addItem(item)
 
 

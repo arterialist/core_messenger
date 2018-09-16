@@ -1,12 +1,11 @@
-import platform
-
-from PyQt5.QtGui import QPalette, QColor, QKeySequence
+from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QPushButton, QTextEdit, QFrame, QHBoxLayout, QShortcut
 
-import color_palette
 from callback.callbacks import send_button_clicked_callback
 from iotools.storage import AppStorage
 from models.storage import Category
+from theming.styles import button_style
+from theming.theme_loader import ThemeLoader
 
 
 class MessageInputWidget(QFrame):
@@ -19,35 +18,15 @@ class MessageInputWidget(QFrame):
     def init_ui(self):
         layout = QHBoxLayout()
 
-        palette = self.message_input.palette()
-        palette.setColor(QPalette.Base, QColor(color_palette.primary_light))
-        self.message_input.setPalette(palette)
-        self.message_input.setStyleSheet("color: #DDD;")
+        self.message_input.setStyleSheet(ThemeLoader.loaded_theme.get_default_for_widget(self.message_input))
         self.message_input.setAutoFormatting(QTextEdit.AutoAll)
 
-        self.send_button.setFixedWidth(60)
-        self.send_button.setFixedHeight(30)
-        p = self.send_button.palette()
-        p.setColor(QPalette.Button, QColor(color_palette.primary_light))
-        self.send_button.setPalette(p)
         self.send_button.clicked.connect(lambda: self.send_button_clicked())
         shortcut = QShortcut(QKeySequence("Ctrl+Return"), self.send_button)
         shortcut.activated.connect(lambda: self.send_button_clicked(True))
         shortcut.setEnabled(True)
         self.send_button.clicked.connect(lambda: self.send_button_clicked(True))
-        if platform.system() != "Linux":
-            self.send_button.setStyleSheet("""
-                    QPushButton {
-                        border: 2px solid """ + color_palette.primary + """;
-                        border-radius: 3px;
-                        background-color: """ + color_palette.primary_light + """;
-                        color: #DDD;
-                    }
-    
-                    QPushButton:pressed {
-                        background-color: """ + color_palette.primary_dark + """;
-                    }
-                """)
+        self.send_button.setStyleSheet(ThemeLoader.loaded_theme.apply_to_stylesheet(button_style))
 
         layout.addWidget(self.message_input)
         layout.addWidget(self.send_button)
