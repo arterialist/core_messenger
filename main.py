@@ -15,6 +15,7 @@ from iotools.sql_utils import init_databases, save_databases, delete_messages_ta
 from iotools.storage import AppStorage
 from models.logging import Logger, FileLogChannel
 from models.storage import Category
+from notifications.notifier import NotificationService
 from theming import styles
 from theming.theme_loader import ThemeLoader
 from tools import full_strip
@@ -452,6 +453,8 @@ if __name__ == '__main__':
     main_window = MainWindow()
     settings_window = SettingsWindow()
     main_window.show()
+
+    NotificationService()  # init
     # noinspection PyBroadException
     try:
         sys.exit(app.exec_())
