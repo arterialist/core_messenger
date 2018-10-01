@@ -33,7 +33,7 @@ class Notifier:
         self.__notify_custom(notification, sound_config)  # no MacOS support
 
     def send_windows(self, notification: Notification, sound_config: SoundConfig):
-        self.notitier.show_toast(notification.title,
+        self.notifier.show_toast(notification.title,
                                  notification.message,
                                  duration=4,
                                  threaded=True)
