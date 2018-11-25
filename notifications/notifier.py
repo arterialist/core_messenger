@@ -34,9 +34,9 @@ class Notifier:
 
     def send_windows(self, notification: Notification, sound_config: SoundConfig):
         self.notifier().show_toast(notification.title,
-                                 notification.message,
-                                 duration=4,
-                                 threaded=True)
+                                   notification.message,
+                                   duration=4,
+                                   threaded=True)
 
     def send_notification(self, notification: Notification, sound_config: SoundConfig):
         pass
