@@ -4,6 +4,7 @@ import threading
 from json import JSONDecodeError
 
 from client import layers
+from client.config import METADATA_LEN
 from client.models.actions import ConnectAction
 from client.models.messages import Message
 from client.models.packets import Packet
@@ -60,10 +61,9 @@ def incoming_connections_listener():
 
 # noinspection PyCallingNonCallable
 def p2p_new_message_listener(peer: Client, connection: socket):
-    next_data_len = 8
     while peer.peer_id in peers.keys():
         try:
-            data = connection.recv(next_data_len)
+            data = connection.recv(METADATA_LEN - 1)
         except OSError:
             continue
         reason = None
@@ -78,17 +78,16 @@ def p2p_new_message_listener(peer: Client, connection: socket):
             break
 
         decoded_data: str = data.decode("utf8")
-        if len(data) == 8 and len(decoded_data) == 8 and decoded_data.startswith(chr(64)) and decoded_data.endswith(chr(64)):
+        if decoded_data.startswith(chr(64)) and decoded_data.endswith(chr(64)):
             def is_number(string: str):
                 for char in string:
                     if ord(char) not in range(48, 58):
                         return False
                 return True
 
-            if is_number(decoded_data[1:7]):
-                next_data_len = int(decoded_data[1:7])
-                continue
-        next_data_len = 8
+            if is_number(decoded_data[1:METADATA_LEN - 1]):
+                packet_len = int(decoded_data[1:METADATA_LEN - 1])
+                data = connection.recv(packet_len)
 
         try:
             recv_msg, status_code = layers.socket_handle_received(connection, data, loaded_modules,
@@ -108,10 +107,9 @@ def p2p_new_message_listener(peer: Client, connection: socket):
 
 # noinspection PyCallingNonCallable
 def server_new_message_listener(peer: Server, connection: socket):
-    next_data_len = 8
     while peer.peer_id in peers.keys():
         try:
-            data = connection.recv(next_data_len)
+            data = connection.recv(METADATA_LEN)
         except OSError:
             continue
         reason = None
@@ -126,17 +124,16 @@ def server_new_message_listener(peer: Server, connection: socket):
             break
 
         decoded_data: str = data.decode("utf8")
-        if len(data) == 8 and len(decoded_data) == 8 and decoded_data.startswith(chr(64)) and decoded_data.endswith(chr(64)):
+        if decoded_data.startswith(chr(64)) and decoded_data.endswith(chr(64)):
             def is_number(string: str):
                 for char in string:
                     if ord(char) not in range(48, 58):
                         return False
                 return True
 
-            if is_number(decoded_data[1:7]):
-                next_data_len = int(decoded_data[1:7])
-                continue
-        next_data_len = 8
+            if is_number(decoded_data[1:METADATA_LEN - 1]):
+                packet_len = int(decoded_data[1:METADATA_LEN - 1])
+                data = connection.recv(packet_len)
 
         try:
             recv_msg, status_code = layers.socket_handle_received(connection, data, loaded_modules,
