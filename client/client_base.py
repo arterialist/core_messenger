@@ -63,7 +63,7 @@ def incoming_connections_listener():
 def p2p_new_message_listener(peer: Client, connection: socket):
     while peer.peer_id in peers.keys():
         try:
-            data = connection.recv(METADATA_LEN - 1)
+            data = connection.recv(METADATA_LEN)
         except OSError:
             continue
         reason = None
