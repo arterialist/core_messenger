@@ -1,6 +1,4 @@
-import hashlib
-import uuid
-
+from client.common import get_id_hash
 from client.models.base import Jsonable
 
 
@@ -8,7 +6,7 @@ class Peer(Jsonable):
     def __init__(self, host: str, port: int, peer_id: str = None):
         self.host = host
         self.port = port
-        self.peer_id = peer_id if peer_id else hashlib.md5(str(uuid.uuid4()).encode('utf-8')).hexdigest()
+        self.peer_id = peer_id if peer_id else get_id_hash()
 
 
 class Client(Peer):

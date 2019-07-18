@@ -1,13 +1,12 @@
-import hashlib
-import uuid
 from time import time
 
+from client.common import get_id_hash
 from client.models.base import Jsonable
 
 
 class Message(Jsonable):
     def __init__(self, message_id: str = None, timestamp: int = None, text: str = None, attachments: list = None, mine: bool = False):
-        self.message_id = message_id if message_id else hashlib.md5(str(uuid.uuid4()).encode('utf-8')).hexdigest()
+        self.message_id = message_id if message_id else get_id_hash()
         self.timestamp = timestamp if timestamp else int(round(time() * 1000))
         self.text = text
         self.attachments = attachments
@@ -15,8 +14,10 @@ class Message(Jsonable):
 
 
 class Attachment(Jsonable):
-    def __init__(self, link: str = None):
+    def __init__(self, link: str = None, content_length: int = 0, name: str = None):
         self.link = link
+        self.content_length = content_length
+        self.name = name
 
 
 class Photo(Attachment):

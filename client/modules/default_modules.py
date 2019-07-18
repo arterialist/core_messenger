@@ -4,6 +4,7 @@ import json
 from Crypto import Random
 from Crypto.Cipher import AES
 
+from client.common import from_base64, to_base64
 from client.models.packets import Packet
 from .module import BaseModule, BasePreModule, processing_method, BasePostModule
 
@@ -34,14 +35,14 @@ class Base64EncodeModule(BasePreModule):
     def on_receive(self, data, sock):
         super().on_receive(data, sock)
         if data.message and data.message.text:
-            data.message.text = base64.b64decode(data.message.text.encode()).decode()
+            data.message.text = from_base64(data.message.text.encode())
         return data
 
     @processing_method
     def on_send(self, data):
         super().on_send(data)
         if data.message and data.message.text:
-            data.message.text = base64.b64encode(data.message.text.encode()).decode()
+            data.message.text = to_base64(data.message.text.encode())
         return data
 
 
