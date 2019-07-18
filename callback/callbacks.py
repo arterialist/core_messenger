@@ -189,6 +189,7 @@ def new_message_callback(packet: Packet, peer: Peer, window):
         messages_list.setItemWidget(item, message_item_widget)
         messages_list.scrollToBottom()
         save_message(peer.peer_id, packet.message, peer_id, peer.nickname if type(peer) is Client else "")
+
     elif action == DeleteMessageAction().action:
         delete_message(peer.peer_id, packet.message.message_id)
         for index in range(messages_list.count()):
@@ -197,6 +198,7 @@ def new_message_callback(packet: Packet, peer: Peer, window):
             if message_item_widget.message.message_id == packet.message.message_id:
                 messages_list.takeItem(messages_list.row(message_item))
                 break
+
     elif action == EditMessageAction().action:
         edit_message(peer.peer_id, packet.message)
         for index in range(messages_list.count()):
@@ -205,6 +207,7 @@ def new_message_callback(packet: Packet, peer: Peer, window):
             if message_item_widget.message.message_id == packet.message.message_id:
                 message_item_widget.init_ui()
                 break
+
     elif action == PeerInfoAction().action:
         nickname = packet.data.content["nickname"]
         port = packet.data.content["port"]
@@ -224,6 +227,7 @@ def new_message_callback(packet: Packet, peer: Peer, window):
                     "request": False
                 })
             ))
+
     elif action == ServiceAction().action:
         message_item_widget = MessageItemWidget(packet.message, peer.peer_id, "", True)
         item = QListWidgetItem()
@@ -232,9 +236,11 @@ def new_message_callback(packet: Packet, peer: Peer, window):
         messages_list.setItemWidget(item, message_item_widget)
         messages_list.scrollToBottom()
         save_message(peer.peer_id, packet.message, peer.peer_id, True)
+
     elif action == DisconnectAction().action:
         pass
         # TODO peer has disconnected
+
     elif action == ConnectAction().action:
         if packet.data:  # indicates that it's just reconnect
             return
@@ -310,7 +316,7 @@ def edit_message_item_selected_callback(opened_dialog: QWidget, message_item: Me
         dialog = opened_dialog.parentWidget().parentWidget().dialogs_list_frame.dialogs_list.currentItem()
         current_peer_id = dialog.peer_id
         message_item.message.text = new_text
-        message_item.init_ui()
+        message_item.refresh()
         new_message = Message(
             old_message.message_id,
             old_message.timestamp,
