@@ -255,13 +255,11 @@ def new_message_callback(packet: Packet, peer: Peer, window):
 
 
 def invalid_message_callback(reason, message, peer):
-    client_base.invalid_message_callback = None
     alert_box = QMessageBox()
     alert_box.setWindowTitle("Invalid message received")
     alert_box.setText("Reason:\n{}\nFrom:{}:{}\n\nMessage:\n{}".format(reason, peer.host, peer.port, message))
     alert_box.setStandardButtons(QMessageBox.Ok)
     alert_box.exec_()
-    client_base.invalid_message_callback = invalid_message_callback
 
 
 def delete_dialog_callback(peer_id: str, host: str, port: int):

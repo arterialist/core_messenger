@@ -35,14 +35,20 @@ init_databases()
 # noinspection PyUnresolvedReferences
 class MainWindow(QMainWindow):
     new_message_signal = pyqtSignal(Packet, Peer)
+    invalid_message_signal = pyqtSignal(str, str, Peer)
 
     @pyqtSlot(Packet, Peer)
     def new_message_received_slot(self, packet: Packet, peer: Peer):
         new_message_callback(packet, peer, main_window)
 
+    @pyqtSlot(str, str, Peer)
+    def invalid_message_received_slot(self, reason: str, message: str, peer: Peer):
+        invalid_message_callback(reason, message, peer)
+
     def __init__(self):
         super().__init__()
         self.new_message_signal.connect(self.new_message_received_slot)
+        self.invalid_message_signal.connect(self.invalid_message_received_slot)
         self.init_ui()
 
     def init_ui(self):
@@ -120,7 +126,7 @@ class MainWindow(QMainWindow):
 
         client_base.init_socket()
         client_base.new_message_callback = lambda message, peer: self.new_message_signal.emit(message, peer)
-        client_base.invalid_message_callback = invalid_message_callback
+        client_base.invalid_message_callback = lambda reason, message, peer: self.invalid_message_signal.emit(reason, message, peer)
 
     @staticmethod
     def open_settings():
